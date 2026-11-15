@@ -34,7 +34,7 @@ button:focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
 #topRight{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 #mini{width:170px;height:120px;border-radius:12px;border:3px solid #fff;box-shadow:0 4px 0 rgba(58,42,77,.25);background:#1f7fc4;cursor:pointer}
 #weatherTag{font-weight:700;font-size:14px}
-#invBar{position:absolute;bottom:calc(10px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:flex;gap:8px;font-size:18px;font-weight:700;max-width:70vw;overflow:hidden;white-space:nowrap}
+#invBar{display:flex;flex-wrap:wrap;gap:2px 8px;font-size:15px;font-weight:700;margin-top:2px;padding-top:3px;border-top:2px dashed #ecdcc4}
 #invBar:empty{display:none}
 #btns{position:absolute;bottom:calc(10px + env(safe-area-inset-bottom,0px));right:max(10px,env(safe-area-inset-right,0px));display:flex;gap:8px}
 .rbtn{width:48px;height:48px;border-radius:50%;font-size:24px;background:var(--panel);box-shadow:0 4px 0 rgba(58,42,77,.3);border:3px solid #fff}
@@ -47,11 +47,11 @@ body.touch #touch{display:block}
 .tbtn small{font-size:12px}
 #tE{right:max(20px,env(safe-area-inset-right,0px));bottom:calc(80px + env(safe-area-inset-bottom,0px))}
 #tF{right:max(104px,calc(env(safe-area-inset-right,0px) + 84px));bottom:calc(80px + env(safe-area-inset-bottom,0px));background:#9fe3ff}
-body.touch #invBar{bottom:calc(170px + env(safe-area-inset-bottom,0px))}
 
 #toasts{position:fixed;top:calc(108px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:50;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
-.toast{background:var(--ink);color:#fff;font-weight:700;padding:6px 16px;border-radius:999px;font-size:16px;animation:pop .25s ease-out;box-shadow:0 4px 12px rgba(0,0,0,.25);text-align:center;max-width:90vw}
+.toast{background:var(--ink);color:#fff;font-weight:700;padding:6px 16px;border-radius:999px;font-size:16px;box-shadow:0 4px 12px rgba(0,0,0,.25);text-align:center;max-width:90vw}
 @keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes toastOut{from{opacity:1}to{opacity:0;transform:translateY(-10px);visibility:hidden}}
 
 #dialog{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(660px,calc(100vw - 24px));z-index:20;background:var(--panel);border:4px solid #fff;border-radius:22px;box-shadow:0 6px 0 rgba(58,42,77,.3),0 12px 30px rgba(0,0,0,.25);padding:12px 18px 14px}
 #dhead{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;color:var(--accent2)}
@@ -118,20 +118,18 @@ body.touch #invBar{bottom:calc(170px + env(safe-area-inset-bottom,0px))}
   body.touch #tE{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
   body.touch #tF{right:max(126px,calc(env(safe-area-inset-right,0px) + 106px));bottom:calc(84px + env(safe-area-inset-bottom,0px))}
   body.touch .rbtn{width:56px;height:56px;font-size:28px}
-  body.touch #invBar{bottom:calc(200px + env(safe-area-inset-bottom,0px))}
   body.touch .bbtn{font-size:19px;padding:10px 16px;min-width:150px}
   body.touch .choice{font-size:20px;padding:10px 22px}
 }
-@media (prefers-reduced-motion:reduce){.toast{animation:none}.tbtn.ready{animation:none}}
+@media (prefers-reduced-motion:reduce){.tbtn.ready{animation:none}}
 </style>
 
 <canvas id="game"></canvas>
 
 <div id="hud" class="hidden">
-  <div id="topLeft" class="card"><div id="who"></div><div id="petsRow"></div></div>
+  <div id="topLeft" class="card"><div id="who"></div><div id="petsRow"></div><div id="invBar" title="Your snacks"></div></div>
   <div id="race" class="card"></div>
   <div id="topRight"><canvas id="mini" width="170" height="120" title="Open map"></canvas><div id="weatherTag" class="card"></div></div>
-  <div id="invBar" class="card"></div>
   <div id="btns">
     <button class="rbtn" id="bBag" title="Backpack (I)">🎒</button>
     <button class="rbtn" id="bMap" title="Map (M)">🗺️</button>
@@ -381,7 +379,15 @@ function syncPets(){pets=S.pets.map((id,i)=>{const old=pets.find(p=>p.id===id);r
 function resetTrail(){P.trail=[];for(let i=0;i<120;i++)P.trail.push({x:P.x,y:P.y});pets.forEach((p,i)=>{p.x=P.x-12*(i+1)*0.5;p.y=P.y+6;});}
 
 // ================= UI: toasts, dialog, overlay =================
-function toast(msg,ms=2600){const d=document.createElement('div');d.className='toast';d.textContent=msg;$('toasts').appendChild(d);setTimeout(()=>d.remove(),ms);while($('toasts').children.length>3)$('toasts').firstChild.remove();}
+// A toast removes itself two ways: a timer, and a CSS fade that hides it even if the timer never fires (seen on Fire tablets).
+const reduceMotion=(()=>{try{return matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}})();
+function killToast(d){if(d&&d.parentNode)d.parentNode.removeChild(d);}
+function toast(msg,ms=2600){const box=$('toasts'),d=document.createElement('div');d.className='toast';d.textContent=msg;d.dataset.born=Date.now()+ms;
+  const out=`toastOut .4s ease-in ${Math.max(0,ms-400)/1000}s forwards`;d.style.animation=reduceMotion?out.replace('.4s','.01s'):`pop .25s ease-out, ${out}`;
+  d.addEventListener('animationend',e=>{if(e.animationName==='toastOut')killToast(d);});
+  box.appendChild(d);setTimeout(()=>killToast(d),ms+100);
+  while(box.children.length>3)killToast(box.firstElementChild);}
+function sweepToasts(){const now=Date.now();[...$('toasts').children].forEach(d=>{if(+d.dataset.born+500<now)killToast(d);});}
 let dlg=null;const dlgQ=[];
 function say(o){dlgQ.push(o);if(!dlg)nextDlg();else if(!dlg.choices){const b=$('dchoices').firstChild;if(b)b.textContent='Next ▶';}}
 function nextDlg(){const o=dlgQ.shift();const el=$('dialog');if(!o){dlg=null;el.classList.add('hidden');return;}dlg=o;el.classList.remove('hidden');$('demoji').textContent=o.emoji||'';$('dname').textContent=o.name||'';$('dtext').textContent=o.text;const box=$('dchoices');box.innerHTML='';const ch=o.choices||[{label:dlgQ.length?'Next ▶':'OK ▶'}];ch.forEach((c,i)=>{const b=document.createElement('button');b.className='choice'+(i>0?' alt':'');b.innerHTML=(ch.length>1?`<span class="k">${i+1}</span>`:'');b.appendChild(document.createTextNode(c.label));b.onclick=()=>chooseDlg(i);box.appendChild(b);});}
@@ -707,7 +713,7 @@ function update(dt){
   sparkles.forEach(s=>s.t-=dt);sparkles=sparkles.filter(s=>s.t>0);
   if(scene!=='title')weatherUpdate(dt);
   if(scene==='battle'&&B)battleUpdate(dt);
-  hudT-=dt;if(scene!=='title'&&(hudDirty||hudT<=0)){hudDirty=false;hudT=.5;updateHUD();}
+  hudT-=dt;if(scene!=='title'&&(hudDirty||hudT<=0)){hudDirty=false;hudT=.5;updateHUD();sweepToasts();}
   saveT+=dt;if(saveT>8&&(scene==='world')){saveT=0;if(P.mode==='walk')save();}
 }
 function id_isUnicorn(p){return p.id==='unicorn';}
