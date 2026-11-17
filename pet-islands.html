@@ -32,7 +32,7 @@ button:focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
 #race{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);text-align:center;font-weight:700;font-size:14px;white-space:nowrap}
 #race .bar{display:flex;gap:3px;justify-content:center;font-size:15px}
 #topRight{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;align-items:flex-end;gap:6px}
-#mini{width:170px;height:120px;border-radius:12px;border:3px solid #fff;box-shadow:0 4px 0 rgba(58,42,77,.25);background:#1f7fc4;cursor:pointer}
+#mini{width:170px;height:125px;border-radius:12px;border:3px solid #fff;box-shadow:0 4px 0 rgba(58,42,77,.25);background:#1f7fc4;cursor:pointer}
 #weatherTag{font-weight:700;font-size:14px}
 #invBar{display:flex;flex-wrap:wrap;gap:2px 8px;font-size:15px;font-weight:700;margin-top:2px;padding-top:3px;border-top:2px dashed #ecdcc4}
 #invBar:empty{display:none}
@@ -101,7 +101,7 @@ body.touch #touch{display:block}
 .bigBtn{background:var(--accent);color:#fff;font-weight:800;font-size:22px;padding:8px 26px;border-radius:999px;box-shadow:0 5px 0 #c93c7c;margin:12px 6px 0}
 .bigBtn.alt{background:var(--accent2);box-shadow:0 5px 0 #5638d6}
 @media (max-width:640px){
-  #mini{width:110px;height:78px}
+  #mini{width:110px;height:81px}
   #race{top:auto;bottom:calc(66px + env(safe-area-inset-bottom,0px));font-size:12px}
   body.touch #race{bottom:auto;top:calc(146px + env(safe-area-inset-top,0px));left:auto;right:max(10px,env(safe-area-inset-right,0px));transform:none}
   #who{font-size:15px}#petsRow{font-size:18px}
@@ -129,7 +129,7 @@ body.touch #touch{display:block}
 <div id="hud" class="hidden">
   <div id="topLeft" class="card"><div id="who"></div><div id="petsRow"></div><div id="invBar" title="Your snacks"></div></div>
   <div id="race" class="card"></div>
-  <div id="topRight"><canvas id="mini" width="170" height="120" title="Open map"></canvas><div id="weatherTag" class="card"></div></div>
+  <div id="topRight"><canvas id="mini" width="170" height="125" title="Open map"></canvas><div id="weatherTag" class="card"></div></div>
   <div id="btns">
     <button class="rbtn" id="bBag" title="Backpack (I)">🎒</button>
     <button class="rbtn" id="bMap" title="Map (M)">🗺️</button>
@@ -151,7 +151,7 @@ body.touch #touch{display:block}
   <div id="tbox">
     <div class="parade">🐶🐱🦄🐆🐠</div>
     <h1>Pet Islands</h1>
-    <div class="sub">Sail, fly, make animal friends, and beat the Shadow Dragon!</div>
+    <div class="sub">Sail, fly, make animal friends, and beat three giant bosses!</div>
     <div><b>Pick your hero:</b></div>
     <div id="chars"></div>
     <div><input id="nameIn" maxlength="14" value="Addison" aria-label="Your name"></div>
@@ -207,88 +207,149 @@ const SFX={
 };
 
 // ================= data =================
-const T=32,MW=170,MH=120;
+const T=32,MW=340,MH=250;
 const CROPS={
   carrot:{e:'🥕',n:'Carrot',heal:20}, strawberry:{e:'🍓',n:'Strawberry',heal:15}, tomato:{e:'🍅',n:'Tomato',heal:15},
   corn:{e:'🌽',n:'Corn',heal:20}, apple:{e:'🍎',n:'Apple',heal:18}, watermelon:{e:'🍉',n:'Watermelon',heal:35},
   pumpkin:{e:'🎃',n:'Pumpkin',heal:30}, grapes:{e:'🍇',n:'Grapes',heal:15}, banana:{e:'🍌',n:'Banana',heal:20},
 };
 const PETS={
-  dog:{e:'🐶',short:'Buddy',name:'Buddy the Dog',power:'Bark Blast',desc:'A giant bark! Often makes the other side too surprised to move.',world:'Sniffs out yummy veggies.'},
+  dog:{e:'🐶',short:'Buddy',name:'Buddy the Dog',power:'Bark Blast',desc:'A giant bark! Often makes the other side too surprised to move.',world:'Your very first friend.'},
   cat:{e:'🐱',short:'Whiskers',name:'Whiskers the Cat',power:'Lucky Purr',desc:'Heals you a little and makes you dodge the next attack.',world:'Always lands on her feet.'},
+  blackcat:{e:'🐈‍⬛',short:'Midnight',name:'Midnight the Black Cat',power:'Night Swipe',desc:'A sneaky swipe, then you dodge the next attack.',world:'Loves quiet museums and books.'},
   unicorn:{e:'🦄',short:'Sparkle',name:'Sparkle the Unicorn',power:'Rainbow Beam',desc:'A super strong rainbow blast!',world:'Leaves a trail of sparkles.'},
   cheetah:{e:'🐆',badge:'⚡',short:'Zoom',name:'Zoom the Cheetah',power:'Speed Dash',desc:'Zooms in and hits 3 times super fast.',world:'Makes you walk faster!'},
   leopard:{e:'🐆',short:'Spots',name:'Spots the Leopard',power:'Jungle Pounce',desc:'A huge pounce. Sometimes a DOUBLE hit!',world:'Great at climbing.'},
+  lion:{e:'🦁',short:'Leo',name:'Leo the Lion',power:"King's Roar",desc:'One of the strongest hits in the game!',world:'King of Savanna Island.'},
+  tiger:{e:'🐯',short:'Stripes',name:'Stripes the Tiger',power:'Tiger Roar',desc:'A big hit that also makes the next attack on you weaker.',world:'Hides in the jungle.'},
   fish:{e:'🐠',bubble:true,short:'Bubbles',name:'Bubbles the Fish',power:'Bubble Shield',desc:'Blocks the next 2 attacks.',world:'Floats along in a magic bubble.'},
   penguin:{e:'🐧',short:'Waddles',name:'Waddles the Penguin',power:'Ice Slide',desc:'Slides in and freezes the other side for a turn.',world:'Loves the snow.'},
   bunny:{e:'🐰',short:'Hops',name:'Hops the Bunny',power:'Carrot Heal',desc:'Heals a LOT of your energy.',world:'Hop hop hop!'},
-  dragon:{e:'🐲',short:'Ember',name:'Ember the Baby Dragon',power:'Star Breath',desc:'The strongest power of all!',world:'Was the Shadow Dragon — now a happy friend.'},
+  deer:{e:'🦌',short:'Fern',name:'Fern the Deer',power:'Forest Blessing',desc:'Heals you and adds a shield that blocks one attack.',world:'Gentle and quiet.'},
+  fox:{e:'🦊',short:'Rusty',name:'Rusty the Fox',power:'Trick Tail',desc:'A tricky hit that also heals you a little.',world:'Very clever.'},
+  kangaroo:{e:'🦘',short:'Boing',name:'Boing the Kangaroo',power:'Boxing Hop',desc:'Two quick boxing punches!',world:'Can hop super high.'},
+  koala:{e:'🐨',short:'Snoozy',name:'Snoozy the Koala',power:'Sleepy Song',desc:'Often puts the other side to sleep for a turn.',world:'Naps 20 hours a day.'},
+  dragon:{e:'🐲',short:'Ember',name:'Ember the Baby Dragon',power:'Star Breath',desc:'A huge blast of star fire!',world:'Was the Shadow Dragon. Now a happy friend.'},
+  octopus:{e:'🐙',short:'Inky',name:'Inky the Octopus',power:'Ink Splash',desc:'A big splash that also stuns the other side.',world:'Was the Frost Kraken. Now a cuddly friend.'},
+  rex:{e:'🦖',short:'Rexy',name:'Rexy the Dino',power:'Dino Stomp',desc:'The strongest power of all!',world:'Was Mega Rex. Now a silly baby dino.'},
 };
-const PET_ORDER=['dog','cat','unicorn','cheetah','leopard','fish','penguin','bunny','dragon'];
-const PET_HINT={cat:'Lives on Kitty Cove (northwest).',unicorn:'Lives on Sparkle Island. Loves strawberries 🍓.',cheetah:'Lives on Savanna Island. Only joins winners ⚔️.',leopard:'Lives on Savanna Island. Hungry for corn 🌽.',fish:'Lives at Coral Reef (south of Savanna).',penguin:'Lives on Frosty Island. Joins champions with 3 wins.',bunny:'Lives on Bunny Burrow (south of Home). Loves carrots 🥕.',dragon:'Beat the Shadow Dragon to find out...'};
+const PET_ORDER=['dog','cat','blackcat','bunny','fish','deer','fox','unicorn','cheetah','leopard','lion','kangaroo','koala','tiger','penguin','dragon','octopus','rex'];
+const BOSS_PET_HINT={dragon:'Beat the Shadow Dragon to meet this friend.',octopus:'Beat the Frost Kraken to meet this friend.',rex:'Beat Mega Rex to meet this friend.'};
+
+// Bosses wake one at a time, in this order, each time you win the Boss Race.
+const BOSSES=[
+ {name:'Shadow Dragon',e:'🐉',hp:600,atk:[14,20],moves:[{n:'Shadow Puff',e:'💨'},{n:'Grumpy Roar',e:'💥'},{n:'Tail Swoosh',e:'🌀'}],
+  special:{n:'Shadow Storm',e:'🌪️',every:3,dmg:[30,36]},reward:'dragon',sky:['#3b1747','#c2563a'],ground:'#4d3535',
+  wake:'RUMBLE RUMBLE! 🌋 The Shadow Dragon woke up on Volcano Island (far southeast)! It is VERY strong. Bring your best team and lots of snacks!',
+  winText:'The shadows float away... The dragon shrinks into a tiny, happy baby dragon! "Thank you! I was so lonely in that volcano."'},
+ {name:'Frost Kraken',e:'🦑',hp:800,atk:[16,22],moves:[{n:'Tentacle Slap',e:'🌊'},{n:'Ice Squirt',e:'💧'},{n:'Whirlpool',e:'🌀'}],
+  special:{n:'Ink Blizzard',e:'❄️',every:3,dmg:[24,30],freeze:true},reward:'octopus',sky:['#14365e','#7fb8e6'],ground:'#cfe3f5',
+  wake:'SPLOOSH! 🌊 The Frost Kraken rose up on Frosty Island (far northeast)! Its Ink Blizzard freezes your pets. It is even stronger than the dragon!',
+  winText:'The Frost Kraken sinks into the icy sea... and a tiny, friendly octopus pops up and waves at you!'},
+ {name:'Mega Rex',e:'🦖',hp:1050,atk:[18,25],moves:[{n:'Chomp',e:'💥'},{n:'Tail Whip',e:'🌀'},{n:'Boulder Kick',e:'☄️'}],
+  special:{n:'Mega Stomp',e:'💥',every:3,dmg:[18,22],double:true},reward:'rex',sky:['#1f4a22','#9bd16b'],ground:'#3f7a3a',
+  wake:'STOMP! STOMP! 🦖 Mega Rex is awake in Tiger Jungle (north)! It is the hardest boss of all. Its Mega Stomp hits TWICE!',
+  winText:'Mega Rex sits down, yawns... and a baby dino hatches from a giant egg next to it! "Rawr!" (That means hello.)'},
+];
 
 const ISLANDS=[
- {id:'home',name:'Home Island',x:40,y:60,r:13,biome:'grass',boats:[0,Math.PI/2,-2.3],
-  feats:[{k:'house',dx:-4,dy:-4}],
+ {id:'home',name:'Home Island',x:60,y:120,r:22,biome:'grass',boats:[0,Math.PI/2,-2.3,Math.PI,-0.8],
+  feats:[{k:'house',dx:-6,dy:-7}],
   npcs:[
-   {id:'rosie',name:'Grandma Rosie',e:'👵',dx:-1,dy:-2,lines:['Hello sweetie! Welcome to Pet Islands! 🌴','Walk with the arrow keys or WASD. Your pets follow you everywhere!','Press F to fly! Press E to talk, pick veggies and hop in boats.','Hop in a boat ⛵ on the beach to sail to other islands!','Every animal here is friendly. They will never hurt you. 💕','Press I to open your backpack and see your pets\' powers!']},
-   {id:'joe',name:'Farmer Joe',e:'🧑‍🌾',dx:5,dy:1,lines:['Howdy! Walk over the ripe veggies in my garden to pick them!','Rain makes plants grow back twice as fast! 🌧️','Snacks heal you in battles. A watermelon 🍉 heals the most!','Bunnies LOVE carrots. There\'s a bunny on Bunny Burrow, just south of here.']},
-   {id:'kim',name:'Coach Kim',e:'🧑‍🏫',dx:-5,dy:3,fight:1,lines:['Want to practice battling? Your pets have special powers!','Each pet power needs a little rest after you use it.','Win battles to get closer to the big boss!']},
+   {id:'rosie',name:'Grandma Rosie',e:'👵',dx:-2,dy:-4,lines:['Hello sweetie! Welcome to Pet Islands! 🌴','Walk around and explore. Some islands are HUGE!','Animals won\'t join you right away. Bring them gifts and win battles to earn their trust.','Hop in a boat ⛵ on the beach to sail to other islands!','Every animal here is friendly. They will never hurt you. 💕','Open your backpack 🎒 to see what each animal needs, and to pick your battle team.']},
+   {id:'joe',name:'Farmer Joe',e:'🧑‍🌾',dx:8,dy:2,lines:['Howdy! Walk over the ripe veggies in my garden to pick them!','Rain makes plants grow back twice as fast! 🌧️','You can only eat 3 snacks in each battle, so pick good ones! A watermelon 🍉 heals the most.','Hops the bunny wants 6 carrots. Better start picking! 🥕']},
+   {id:'kim',name:'Coach Kim',e:'🧑‍🏫',dx:-9,dy:5,fight:1,lines:['Want to practice battling? I\'m the easiest battler around.','Each pet power needs to rest for 3 turns after you use it.','Pick your best 4 pets for your battle team in the backpack!']},
+   {id:'chloe',name:'Champion Chloe',e:'👩‍🦰',dx:12,dy:-9,fight:7,lines:['I\'m the island champion. Nobody has EVER beaten me!','Come back when you have a really strong team.']},
   ],
-  garden:{dx:1,dy:3,crops:['carrot','carrot','carrot','carrot','strawberry','strawberry','strawberry','pumpkin']}},
- {id:'kitty',name:'Kitty Cove',x:20,y:30,r:6,biome:'grass',boats:[0.8],
-  npcs:[{id:'lily',name:'Lily',e:'👧',dx:2,dy:1,lines:['My kitty Whiskers wants to go on adventures! Go say hi!','Cats love naps in the sunshine ☀️','Whiskers is lucky. Her purr helps you dodge!']}],
-  animal:{pet:'cat',dx:-1,dy:-1}},
- {id:'museum',name:'Museum Isle',x:78,y:32,r:12,biome:'grass',boats:[2.5,0,1.6],
-  feats:[{k:'museum',museum:'great',dx:0,dy:-4}],
+  garden:{dx:2,dy:6,crops:['carrot','carrot','carrot','carrot','strawberry','strawberry','strawberry','strawberry','pumpkin','pumpkin','apple','apple']}},
+ {id:'kitty',name:'Kitty Cove',x:25,y:45,r:8,biome:'grass',boats:[1.1,0],
+  npcs:[{id:'lily',name:'Lily',e:'👧',dx:2,dy:1,lines:['My kitty Whiskers wants to go on adventures!','She is a little picky though. She wants 4 strawberries 🍓 first.','Cats love naps in the sunshine ☀️']}],
+  animals:[{pet:'cat',dx:-2,dy:-2,need:{items:{strawberry:4}},say:'Whiskers sniffs the air for strawberries.'}]},
+ {id:'museum',name:'Museum Isle',x:110,y:40,r:20,biome:'grass',boats:[2.2,Math.PI/2,0,Math.PI],
+  feats:[{k:'museum',museum:'great',dx:0,dy:-6}],
   npcs:[
-   {id:'page',name:'Professor Page',e:'👩‍🏫',dx:3,dy:-1,lines:['Welcome to the Great Museum! Walk to the door and press E to go in.','Inside you can read books and look at cool exhibits!','Have you read The Legend of the Shadow Dragon? It has secrets!']},
-   {id:'coco',name:'Coco the Painter',e:'👩‍🎨',dx:-4,dy:0,lines:['I painted the Starry Sea painting in the museum! 🎨','The weather changes all the time here. Rainbows are my favorite! 🌈','Try flying over the sea. Everything looks so tiny!']},
-   {id:'max',name:'Max',e:'👦',dx:-3,dy:4,fight:2,lines:['I\'m Max! I\'ve won like a hundred battles! ...Okay, two.','Bet my water balloons are faster than your pets!']},
+   {id:'page',name:'Professor Page',e:'👩‍🏫',dx:4,dy:-2,lines:['Welcome to the Great Museum! Walk to the door to go in.','Midnight the black cat only trusts real readers. Read 6 books in the museums!','There\'s another museum, the Ice Museum, way up on Frosty Island.']},
+   {id:'coco',name:'Coco the Painter',e:'👩‍🎨',dx:-7,dy:0,lines:['I painted the Starry Sea painting in the museum! 🎨','The weather changes all the time here. Rainbows are my favorite! 🌈','Try flying over the sea. The islands look so big from up there!']},
+   {id:'max',name:'Max',e:'👦',dx:-5,dy:7,fight:2,lines:['I\'m Max! I\'ve won like a hundred battles! ...Okay, two.','My water balloons are super fast!']},
   ],
-  garden:{dx:2,dy:3,crops:['tomato','tomato','tomato','strawberry','apple','apple','strawberry','banana']}},
- {id:'sparkle',name:'Sparkle Island',x:78,y:84,r:8,biome:'sparkle',boats:[-2.6,0],
-  npcs:[{id:'twinkle',name:'Fairy Twinkle',e:'🧚',dx:3,dy:-2,lines:['Sparkle the unicorn is shy... but she LOVES strawberries! 🍓','Bring her 3 strawberries and she\'ll be your best friend!','Did you know you can fly? Press F! ✨']}],
-  animal:{pet:'unicorn',dx:-1,dy:0,need:{item:'strawberry',n:3}},
-  garden:{dx:-2,dy:3,crops:['strawberry','grapes','strawberry']}},
- {id:'savanna',name:'Savanna Island',x:122,y:62,r:15,biome:'savanna',boats:[Math.PI,-1.2,0.9,2.2],
+  animals:[{pet:'blackcat',dx:7,dy:-7,need:{books:6},say:'Midnight is curled up reading by the museum.'}],
+  garden:{dx:3,dy:6,crops:['tomato','tomato','tomato','strawberry','strawberry','strawberry','apple','banana']}},
+ {id:'maple',name:'Maple Woods',x:115,y:118,r:14,biome:'forest',boats:[Math.PI,0,-Math.PI/2,Math.PI/2],
   npcs:[
-   {id:'rita',name:'Ranger Rita',e:'🤠',dx:0,dy:2,lines:['Welcome to Savanna Island! Cheetahs and leopards live here.','Zoom the cheetah only joins winners. Win a battle first!','Spots the leopard is hungry for corn 🌽. Three should do it!','Cheetahs are the fastest runners on land!']},
-   {id:'zeke',name:'Zippy Zeke',e:'🧑',dx:6,dy:-2,fight:3,lines:['I\'m the fastest battler on the savanna!','Ready, set... BATTLE?']},
-   {id:'sunny',name:'Sunny Sam',e:'👩',dx:-5,dy:-5,fight:3,lines:['The sun makes me strong! ☀️','Let\'s have a friendly battle!']},
+   {id:'fern',name:'Elf Willow',e:'🧝',dx:3,dy:-3,lines:['Shh... the forest animals are shy. 🌲','Fern the deer loves apples 🍎. She also wants to see that you are brave.','Rusty the fox likes pumpkins 🎃, and only follows strong battlers.']},
+   {id:'woody',name:'Woody',e:'🧔',dx:-5,dy:4,fight:3,lines:['I chop wood all day. I\'m super strong!','Battle me if you dare!']},
   ],
-  animal:{pet:'cheetah',dx:4,dy:4,need:{wins:1}},
-  animal2:{pet:'leopard',dx:-6,dy:3,need:{item:'corn',n:3}},
-  garden:{dx:-2,dy:-1,crops:['corn','corn','corn','corn','watermelon','watermelon']}},
- {id:'coral',name:'Coral Reef',x:104,y:104,r:5,biome:'sand',boats:[-1.2,Math.PI],
-  npcs:[{id:'marina',name:'Marina',e:'🧜‍♀️',dx:2,dy:1,lines:['Hi! I\'m Marina! 🐚','Bubbles the fish wants to explore with you. Go say hi!','I gave Bubbles a magic bubble, so she can float along on land!']}],
-  animal:{pet:'fish',dx:-1,dy:-1}},
- {id:'frosty',name:'Frosty Island',x:138,y:22,r:10,biome:'snow',boats:[Math.PI/2,Math.PI],
-  feats:[{k:'museum',museum:'ice',dx:-1,dy:-4}],
-  npcs:[
-   {id:'snow',name:'Dr. Snow',e:'👩‍🔬',dx:3,dy:0,lines:['Brrr! Welcome to Frosty Island! It\'s always snowy here. ❄️','Visit the Ice Museum to learn about weather and the sea!','Waddles the penguin only joins champions with 3 wins.']},
-   {id:'frost',name:'Captain Frost',e:'🧔',dx:-4,dy:2,fight:4,lines:['Ho ho! Nobody beats Captain Frost!','My snowballs are extra fluffy. Battle?']},
+  animals:[
+   {pet:'deer',dx:-3,dy:-4,need:{items:{apple:5},wins:2},say:'Fern hides behind a tree and peeks at you.'},
+   {pet:'fox',dx:5,dy:3,need:{items:{pumpkin:3},wins:4},say:'Rusty sniffs you, then runs in a little circle.'},
   ],
-  animal:{pet:'penguin',dx:2,dy:4,need:{wins:3}},
-  garden:{dx:-6,dy:-1,crops:['grapes','grapes','grapes']}},
- {id:'bunny',name:'Bunny Burrow',x:45,y:100,r:6,biome:'grass',boats:[-Math.PI/2,0],
-  npcs:[{id:'gus',name:'Grandpa Gus',e:'👴',dx:2,dy:1,lines:['Hops the bunny is the best hopper around!','She\'ll join you for 3 carrots 🥕. Farmer Joe grows lots of them!','Her Carrot Heal helps a lot in tough battles.']}],
-  animal:{pet:'bunny',dx:-1,dy:-1,need:{item:'carrot',n:3}},
-  garden:{dx:-2,dy:2,crops:['carrot','carrot']}},
- {id:'volcano',name:'Volcano Island',x:152,y:100,r:9,biome:'volcano',boats:[Math.PI,-2.2],
-  feats:[{k:'volcano',dx:0,dy:-2}],
+  garden:{dx:-3,dy:6,crops:['apple','apple','apple','apple','pumpkin','pumpkin']}},
+ {id:'sparkle',name:'Sparkle Island',x:120,y:195,r:12,biome:'sparkle',boats:[-2.4,-Math.PI/2,0],
+  npcs:[{id:'twinkle',name:'Fairy Twinkle',e:'🧚',dx:3,dy:-2,lines:['Sparkle the unicorn is very shy...','She wants 6 strawberries 🍓 AND 3 bunches of grapes 🍇 before she will trust you.','Did you know you can fly? ✨']}],
+  animals:[{pet:'unicorn',dx:-2,dy:0,need:{items:{strawberry:6,grapes:3}},say:'Sparkle tosses her rainbow mane.'}],
+  garden:{dx:-3,dy:4,crops:['strawberry','strawberry','grapes','grapes']}},
+ {id:'savanna',name:'Savanna Island',x:200,y:130,r:34,biome:'savanna',boats:[Math.PI,-Math.PI/2,Math.PI/2,0,2.5,-2.4],
   npcs:[
-   {id:'ember',name:'Wizard Ember',e:'🧙',dx:-4,dy:2,lines:['The Shadow Dragon sleeps inside this volcano. 🌋','Win 5 battles and it will wake up so you can challenge it!','But if you lose battles, Rival Team Thunder gets closer instead!','If the rivals get there first, the dragon gets even stronger!']},
-   {id:'tess',name:'Thunder Tess',e:'🥷',dx:4,dy:3,fight:5,lines:['I\'m from Rival Team Thunder! ⚡','We\'re going to reach the dragon before you do!']},
-  ]},
+   {id:'rita',name:'Ranger Rita',e:'🤠',dx:0,dy:3,lines:['Welcome to Savanna Island, the biggest island of all!','Zoom the cheetah only joins people with 4 wins.','Spots the leopard wants 6 corn 🌽 and 3 wins.','Leo the lion is the king. He only joins true champions with 10 wins!']},
+   {id:'zeke',name:'Zippy Zeke',e:'🧑',dx:10,dy:-4,fight:3,lines:['I\'m the fastest battler on the savanna!','Ready, set... BATTLE?']},
+   {id:'sunny',name:'Sunny Sam',e:'👩',dx:-9,dy:-8,fight:3,lines:['The sun makes me strong! ☀️','Let\'s have a friendly battle!']},
+   {id:'leo',name:'Lion Tamer Lou',e:'🧑‍🎤',dx:14,dy:10,fight:5,lines:['I trained with lions! My battles are TOUGH.','Bring snacks. You\'ll need them.']},
+  ],
+  animals:[
+   {pet:'cheetah',dx:8,dy:8,need:{wins:4},say:'Zoom zips past you, then stops to look.'},
+   {pet:'leopard',dx:-12,dy:6,need:{items:{corn:6},wins:3},say:'Spots watches you from a tree branch.'},
+   {pet:'lion',dx:0,dy:-14,need:{wins:10},say:'Leo gives a big royal yawn.'},
+  ],
+  garden:{dx:-4,dy:-2,crops:['corn','corn','corn','corn','corn','corn','watermelon','watermelon']}},
+ {id:'jungle',name:'Tiger Jungle',x:195,y:40,r:26,biome:'jungle',boats:[Math.PI,Math.PI/2,0,2.4],
+  npcs:[
+   {id:'ava',name:'Explorer Ava',e:'🧗',dx:-3,dy:6,lines:['Welcome to Tiger Jungle! It\'s so big you could get lost!','Stripes the tiger wants 4 watermelons 🍉 and 8 wins. He is very hard to impress.','I heard something HUGE sleeping in this jungle... 🦖']},
+   {id:'vine',name:'Captain Vine',e:'🦸',dx:8,dy:-3,fight:6,lines:['I swing through the trees! Can you keep up?','My battles are some of the hardest around.']},
+  ],
+  animals:[{pet:'tiger',dx:-9,dy:-5,need:{items:{watermelon:4},wins:8},say:'Stripes stares at you with big golden eyes.'}],
+  boss:{idx:2,dx:4,dy:10},
+  garden:{dx:-11,dy:4,crops:['banana','banana','banana','watermelon','watermelon','watermelon']}},
+ {id:'outback',name:'Outback Island',x:290,y:125,r:20,biome:'outback',boats:[Math.PI,-Math.PI/2,Math.PI/2],
+  npcs:[
+   {id:'ollie',name:'Outback Ollie',e:'👨‍🦰',dx:-2,dy:3,lines:['G\'day! Welcome to the Outback! 🦘','Boing the kangaroo wants 5 bananas 🍌 and 5 wins.','Snoozy the koala is always asleep. Win 7 battles and maybe she\'ll wake up for you.']},
+   {id:'dusty',name:'Dusty Dan',e:'👷',dx:6,dy:-4,fight:4,lines:['Dust storms make me tough!','Fancy a battle, mate?']},
+  ],
+  animals:[
+   {pet:'kangaroo',dx:-6,dy:-4,need:{items:{banana:5},wins:5},say:'Boing bounces up and down.'},
+   {pet:'koala',dx:5,dy:6,need:{wins:7},say:'Snoozy is fast asleep in a tree. Zzz...'},
+  ],
+  garden:{dx:-5,dy:7,crops:['banana','banana','banana','grapes','grapes']}},
+ {id:'coral',name:'Coral Reef',x:175,y:225,r:6,biome:'sand',boats:[-1.2,Math.PI,0],
+  npcs:[{id:'marina',name:'Marina',e:'🧜‍♀️',dx:2,dy:1,lines:['Hi! I\'m Marina! 🐚','Bubbles the fish only follows brave battlers. Win 2 battles first!','When she joins, I\'ll give her a magic bubble so she can float on land!']}],
+  animals:[{pet:'fish',dx:-1,dy:-1,need:{wins:2},say:'Bubbles blows a tiny bubble at you.'}]},
+ {id:'frosty',name:'Frosty Island',x:300,y:40,r:24,biome:'snow',boats:[Math.PI/2,Math.PI,2.4],
+  feats:[{k:'museum',museum:'ice',dx:-1,dy:-7}],
+  npcs:[
+   {id:'snow',name:'Dr. Snow',e:'👩‍🔬',dx:5,dy:0,lines:['Brrr! Welcome to Frosty Island! It\'s always snowy here. ❄️','Visit the Ice Museum to read more books!','Waddles the penguin wants 4 grapes 🍇 and 6 wins.','They say a giant Kraken sleeps under the ice... 🦑']},
+   {id:'frost',name:'Captain Frost',e:'🧔',dx:-7,dy:3,fight:5,lines:['Ho ho! Nobody beats Captain Frost!','My snowballs are extra hard. Battle?']},
+  ],
+  animals:[{pet:'penguin',dx:3,dy:7,need:{items:{grapes:4},wins:6},say:'Waddles slides over on his tummy.'}],
+  boss:{idx:1,dx:0,dy:11},
+  garden:{dx:-11,dy:-2,crops:['grapes','grapes','grapes','grapes']}},
+ {id:'bunny',name:'Bunny Burrow',x:50,y:210,r:9,biome:'grass',boats:[-Math.PI/2,0],
+  npcs:[{id:'gus',name:'Grandpa Gus',e:'👴',dx:2,dy:1,lines:['Hops the bunny is the best hopper around!','She is VERY hungry. She wants 6 carrots 🥕.','Her Carrot Heal helps a lot in tough battles.']}],
+  animals:[{pet:'bunny',dx:-2,dy:-2,need:{items:{carrot:6}},say:'Hops wiggles her nose at your backpack.'}],
+  garden:{dx:-3,dy:2,crops:['carrot','carrot','carrot']}},
+ {id:'volcano',name:'Volcano Island',x:305,y:215,r:18,biome:'volcano',boats:[Math.PI,-Math.PI/2,-2.4],
+  feats:[{k:'volcano',dx:0,dy:-4}],
+  npcs:[
+   {id:'ember',name:'Wizard Ember',e:'🧙',dx:-6,dy:3,lines:['Three giant bosses sleep on these islands: the Shadow Dragon, the Frost Kraken and Mega Rex.','Win 7 battles to wake the next boss!','But if you lose battles, Rival Team Thunder gets closer instead!','If the rivals get there first, the boss gets even stronger!','Bosses get ANGRY when they are half beaten. Watch out!']},
+   {id:'tess',name:'Thunder Tess',e:'🥷',dx:6,dy:4,fight:6,lines:['I\'m from Rival Team Thunder! ⚡','We\'re going to reach the bosses before you do!']},
+  ],
+  boss:{idx:0,dx:0,dy:3}},
 ];
 
 const MUSEUMS={
  great:{name:'The Great Museum',wall:'#c98f5a',wall2:'#a8703f',floor1:'#f3e2c2',floor2:'#ead4ad',exhibits:[
   {tx:3,ty:3,e:'📕',n:'All About Dogs',book:['Dogs have an amazing sense of smell. It is much, much better than ours!','Every dog has its own nose print. No two are the same, just like fingerprints.','When a dog wags its tail in big, loose swishes, it is usually happy to see you!']},
-  {tx:6,ty:3,e:'📗',n:'Cheetahs & Leopards',book:['The cheetah is the fastest animal on land. It can run about 70 miles per hour for a short sprint!','Leopards are super climbers. They love to rest high up in trees.','A leopard\'s spots are called rosettes, because they look like little roses.']},
+  {tx:6,ty:3,e:'📗',n:'Big Cats',book:['The cheetah is the fastest animal on land. It can run about 70 miles per hour for a short sprint!','Leopards are super climbers. They love to rest high up in trees.','Tigers are the biggest cats in the world, and every tiger has its own stripe pattern.','Lions are the only cats that live in big family groups, called prides.']},
   {tx:11,ty:3,e:'📘',n:'Cat Secrets',book:['Cats can sleep 12 to 16 hours a day! That\'s a lot of naps.','A cat\'s whiskers help it feel whether it can fit through a small space.','Cats often purr when they are happy and cozy.']},
-  {tx:14,ty:3,e:'📙',n:'The Legend of the Shadow Dragon',book:['Long ago, a little dragon got lost in a storm and hid inside the volcano.','It grew grumpy and full of shadows. Now it only wakes up for true champions.','Win 5 battles to wake it. But hurry! If the rivals win first, it grows stronger.','Some say if you beat it, the shadows go away, and it becomes a friend...']},
+  {tx:14,ty:3,e:'📙',n:'The Legend of the Three Bosses',book:['Long ago, three giant creatures fell asleep on these islands: a dragon, a kraken and a dinosaur.','They only wake up for true champions. Win 7 battles to wake the next one.','But hurry! If the rivals win first, the boss grows stronger.','When a boss is half beaten, it gets angry and hits harder. Keep your snacks ready!']},
   {tx:4,ty:7,e:'🦖',n:'T. rex Model',text:'This is a model of a Tyrannosaurus rex. Real T. rexes lived about 66 to 68 million years ago, long before people!'},
   {tx:9,ty:6,e:'💎',n:'The Island Gem',text:'The Island Gem was found on Home Island by Grandma Rosie when she was a little girl. It sparkles in every color!'},
   {tx:14,ty:7,e:'🖼️',n:'"Starry Sea" painting',text:'"Starry Sea" by Coco the Painter. It shows boats sailing under a night sky full of stars.'},
@@ -298,11 +359,11 @@ const MUSEUMS={
  ice:{name:'The Ice Museum',wall:'#8fc6ec',wall2:'#6aa7d6',floor1:'#eef7ff',floor2:'#dcecfa',exhibits:[
   {tx:3,ty:3,e:'📘',n:'Weather Wonders',book:['Rainbows happen when sunlight shines through raindrops and splits into colors.','Snowflakes almost always have six sides or six points!','A bolt of lightning is hotter than the surface of the sun!','Fog is really just a cloud that is touching the ground.']},
   {tx:6,ty:3,e:'📗',n:'Fish of the Sea',book:['Fish breathe with gills, which take oxygen out of the water.','Goldfish can remember things for months. The "3 second memory" is a myth!','Clownfish live safely inside sea anemones, which sting other fish but not them.']},
-  {tx:11,ty:3,e:'📕',n:'The Unicorn Diaries',book:['Dear Diary, today I ate 3 strawberries. They were the best thing EVER. 🍓','Dear Diary, I made a rainbow with my horn. It was so bright the clouds said "wow."','Dear Diary, I hope a kind friend visits Sparkle Island soon...']},
+  {tx:11,ty:3,e:'📕',n:'Animals of Australia',book:['Kangaroos can hop very fast and use their strong tails for balance.','A baby kangaroo is called a joey. It grows up in its mom\'s pouch.','Koalas sleep up to 20 hours a day and eat eucalyptus leaves.']},
   {tx:14,ty:3,e:'📙',n:'Penguin Parade',book:['Penguins can\'t fly in the air, but they "fly" through the water with their flippers!','Emperor penguins huddle together in big groups to stay warm.','Most penguins live in the southern half of the world.']},
   {tx:4,ty:7,e:'🐋',n:'Blue Whale Model',text:'Blue whales are the biggest animals that have ever lived, even bigger than the biggest dinosaurs!'},
   {tx:9,ty:6,e:'❄️',n:'Giant Snowflake',text:'A giant model of a snowflake. Each snowflake is made of tiny ice crystals that grow as it falls.'},
-  {tx:14,ty:7,e:'🧊',n:'Ice Sculpture',text:'An ice sculpture of a penguin family, carved by Dr. Snow. Don\'t touch, it\'s cold!'},
+  {tx:14,ty:7,e:'🦌',n:'Forest Friends',text:'Deer grow new antlers every year! Foxes use their big fluffy tails to keep warm.'},
   {tx:5,ty:9,e:'🌋',n:'Volcano Model',text:'Volcanoes form when hot melted rock called magma pushes up from deep underground. When it comes out, it is called lava.'},
   {tx:13,ty:9,e:'🌈',n:'Rainbow Prism',text:'A glass prism. When light shines through it, it splits into red, orange, yellow, green, blue, indigo and violet.'},
  ]},
@@ -310,12 +371,15 @@ const MUSEUMS={
 
 const WEATHER={sunny:{e:'☀️',n:'Sunny'},cloudy:{e:'☁️',n:'Cloudy'},rain:{e:'🌧️',n:'Rainy'},storm:{e:'⛈️',n:'Thunderstorm'},snow:{e:'🌨️',n:'Snowy'},fog:{e:'🌫️',n:'Foggy'},rainbow:{e:'🌈',n:'Rainbow'},windy:{e:'🍃',n:'Windy'}};
 const BIOME={
- grass:{land:['#7fd46a','#74cc5f'],tree:'🌳',flowers:['🌷','🌼','🌻'],sky:['#8fd3ff','#dff5ff'],ground:'#7fd46a'},
- sparkle:{land:['#f8b3dd','#f3a4d4'],tree:'🍭',flowers:['💖','✨','🌸'],sky:['#ffc3e6','#fff2fb'],ground:'#f3a4d4'},
- savanna:{land:['#dcc463','#d2b955'],tree:'🌴',flowers:['🌾','🌾','🌵'],sky:['#ffd59e','#fff4dc'],ground:'#d2b955'},
- snow:{land:['#f1f7ff','#e2eefb'],tree:'🌲',flowers:['⛄','❄️','❄️'],sky:['#bfe3ff','#f2f9ff'],ground:'#e2eefb'},
- volcano:{land:['#6b5555','#5e4a4a'],tree:'rock',flowers:['🔥','🍄','🔥'],sky:['#5b2a3a','#d0663f'],ground:'#5e4a4a'},
- sand:{land:['#f3dc9b','#ecd38e'],tree:'🌴',flowers:['🐚','🦀','🐚'],sky:['#8fe0ff','#e6faff'],ground:'#ecd38e'},
+ grass:{land:['#7fd46a','#74cc5f'],tree:'🌳',dens:.07,flowers:['🌷','🌼','🌻'],sky:['#8fd3ff','#dff5ff'],ground:'#7fd46a'},
+ sparkle:{land:['#f8b3dd','#f3a4d4'],tree:'🍭',dens:.07,flowers:['💖','✨','🌸'],sky:['#ffc3e6','#fff2fb'],ground:'#f3a4d4'},
+ savanna:{land:['#dcc463','#d2b955'],tree:'🌴',dens:.04,flowers:['🌾','🌾','🌵'],sky:['#ffd59e','#fff4dc'],ground:'#d2b955'},
+ snow:{land:['#f1f7ff','#e2eefb'],tree:'🌲',dens:.07,flowers:['⛄','❄️','❄️'],sky:['#bfe3ff','#f2f9ff'],ground:'#e2eefb'},
+ volcano:{land:['#6b5555','#5e4a4a'],tree:'rock',dens:.07,flowers:['🔥','🍄','🔥'],sky:['#5b2a3a','#d0663f'],ground:'#5e4a4a'},
+ sand:{land:['#f3dc9b','#ecd38e'],tree:'🌴',dens:.05,flowers:['🐚','🦀','🐚'],sky:['#8fe0ff','#e6faff'],ground:'#ecd38e'},
+ forest:{land:['#5fae4f','#56a347'],tree:'🌲',dens:.12,flowers:['🍄','🌿','🍂'],sky:['#a6dcb0','#eaf7e6'],ground:'#56a347'},
+ jungle:{land:['#3fa34d','#389745'],tree:'🌴',dens:.12,flowers:['🌺','🌿','🌺'],sky:['#7fd6a0','#e3f9e0'],ground:'#389745'},
+ outback:{land:['#d98b4a','#cf7f40'],tree:'🌳',dens:.04,flowers:['🌾','🌵','🌾'],sky:['#ffb27a','#ffe9cf'],ground:'#cf7f40'},
 };
 const SAND='#f3dc9b',SAND2='#ecd290',SHALLOW='#5fd3ea',DEEP='#2a8fd6';
 
@@ -326,36 +390,39 @@ ISLANDS.forEach(I=>{I.s1=srng()*6.28;I.s2=srng()*6.28;I.s3=srng()*6.28;});
 for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){
   let best=9,bi=-1;
   for(let k=0;k<ISLANDS.length;k++){const I=ISLANDS[k];const dx=x+.5-I.x,dy=y+.5-I.y,d=Math.hypot(dx,dy);if(d>I.r*1.9)continue;const a=Math.atan2(dy,dx);const re=I.r*(1+.15*Math.sin(3*a+I.s1)+.08*Math.sin(5*a+I.s2)+.05*Math.sin(9*a+I.s3));const nd=d/re;if(nd<best){best=nd;bi=k;}}
-  const i=y*MW+x;terr[i]=best<.78?3:best<1?2:best<1.4?1:0;if(terr[i]>0)isl[i]=bi;dvar[i]=hash(x,y)%97;
+  const i=y*MW+x;terr[i]=best<.82?3:best<1?2:best<1.35?1:0;if(terr[i]>0)isl[i]=bi;dvar[i]=hash(x,y)%97;
 }
 function forceLand(tx,ty,rad,k){for(let y=ty-rad;y<=ty+rad;y++)for(let x=tx-rad;x<=tx+rad;x++){if(x<0||y<0||x>=MW||y>=MH)continue;const i=y*MW+x;if(terr[i]<3){terr[i]=3;isl[i]=k;}}}
 function reserve(tx,ty,rad){for(let y=ty-rad;y<=ty+rad;y++)for(let x=tx-rad;x<=tx+rad;x++){if(x<0||y<0||x>=MW||y>=MH)continue;reserved[y*MW+x]=1;}}
 function markSolid(x0,y0,x1,y1){for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)if(x>=0&&y>=0&&x<MW&&y<MH)solid[y*MW+x]=1;}
 const NPCS=[],ANIMALS=[],PLANTS=[],BUILDINGS=[],BOATS=[];
-let BOSS=null;
+let BOSS=BOSSES[0];
 ISLANDS.forEach((I,k)=>{
   const c=(dx,dy)=>({tx:I.x+dx,ty:I.y+dy,x:(I.x+dx+.5)*T,y:(I.y+dy+.5)*T});
   const st=c(0,1);forceLand(st.tx,st.ty,1,k);reserve(st.tx,st.ty,1);I.cx=st.x;I.cy=st.y;
   (I.feats||[]).forEach(f=>{const p=c(f.dx,f.dy);const b={...f,...p,island:k};
     if(f.k==='house'){forceLand(p.tx,p.ty,2,k);reserve(p.tx,p.ty,3);markSolid(p.tx-1,p.ty-1,p.tx+1,p.ty);b.door={x:p.x,y:p.y+T*1.1};}
     if(f.k==='museum'){forceLand(p.tx,p.ty,2,k);reserve(p.tx,p.ty,3);markSolid(p.tx-1,p.ty-1,p.tx+1,p.ty);b.door={x:p.x,y:p.y+T*1.1};}
-    if(f.k==='volcano'){forceLand(p.tx,p.ty,3,k);reserve(p.tx,p.ty,4);markSolid(p.tx-2,p.ty-2,p.tx+2,p.ty+1);
-      const bp=c(0,f.dy+4);forceLand(bp.tx,bp.ty,1,k);reserve(bp.tx,bp.ty,2);BOSS={x:bp.x,y:bp.y,island:k};}
+    if(f.k==='volcano'){forceLand(p.tx,p.ty,3,k);reserve(p.tx,p.ty,4);markSolid(p.tx-2,p.ty-2,p.tx+2,p.ty+1);}
     BUILDINGS.push(b);});
+  if(I.boss){const p=c(I.boss.dx,I.boss.dy);forceLand(p.tx,p.ty,2,k);reserve(p.tx,p.ty,3);Object.assign(BOSSES[I.boss.idx],{x:p.x,y:p.y,island:k});}
   (I.npcs||[]).forEach(n=>{const p=c(n.dx,n.dy);forceLand(p.tx,p.ty,1,k);reserve(p.tx,p.ty,1);NPCS.push({...n,...p,island:k,li:0});});
-  [I.animal,I.animal2].forEach(a=>{if(!a)return;const p=c(a.dx,a.dy);forceLand(p.tx,p.ty,1,k);reserve(p.tx,p.ty,1);ANIMALS.push({...a,...p,island:k});});
+  (I.animals||[]).forEach(a=>{const p=c(a.dx,a.dy);forceLand(p.tx,p.ty,1,k);reserve(p.tx,p.ty,1);ANIMALS.push({...a,...p,island:k});});
   if(I.garden){I.garden.crops.forEach((cr,j)=>{const p=c(I.garden.dx+j%4,I.garden.dy+Math.floor(j/4));forceLand(p.tx,p.ty,1,k);reserve(p.tx,p.ty,0);PLANTS.push({type:cr,x:p.x,y:p.y,tx:p.tx,ty:p.ty,ripe:true,t:0});});}
 });
 // trees & decorations
 for(let i=0;i<N;i++){
-  if(terr[i]!==3||reserved[i]||solid[i])continue;const I=ISLANDS[isl[i]];const r=srng();
-  if(r<0.075){deco[i]=1;solid[i]=1;}else if(r<0.14){deco[i]=2;}
+  if(terr[i]!==3||reserved[i]||solid[i])continue;const bi=BIOME[ISLANDS[isl[i]].biome];const r=srng();
+  if(r<bi.dens){deco[i]=1;solid[i]=1;}else if(r<bi.dens+0.065){deco[i]=2;}
 }
-// keep paths from island centers clear: carve a little plus-shaped path
-ISLANDS.forEach(I=>{for(let d=-I.r;d<=I.r;d++){[[I.x+d,I.y+1],[I.x,I.y+d]].forEach(([x,y])=>{if(x<0||y<0||x>=MW||y>=MH)return;const i=y*MW+x;if(deco[i]===1){deco[i]=0;solid[i]=0;}});}});
+// keep walking paths clear: a plus through each island's middle, plus a path from the middle to every person, animal, garden and building
+function carve(x0,y0,x1,y1){const n=Math.max(Math.abs(x1-x0),Math.abs(y1-y0))*2+1;for(let s=0;s<=n;s++){const x=Math.round(x0+(x1-x0)*s/n),y=Math.round(y0+(y1-y0)*s/n);if(x<0||y<0||x>=MW||y>=MH)continue;const i=y*MW+x;if(deco[i]===1){deco[i]=0;solid[i]=0;}}}
+ISLANDS.forEach(I=>{carve(I.x-I.r,I.y+1,I.x+I.r,I.y+1);carve(I.x,I.y-I.r,I.x,I.y+I.r);});
+[...NPCS,...ANIMALS,...PLANTS].forEach(o=>{const I=ISLANDS[o.island===undefined?isl[o.ty*MW+o.tx]:o.island];carve(I.x,I.y+1,o.tx,o.ty);});
+BUILDINGS.forEach(b=>{const I=ISLANDS[b.island];carve(I.x,I.y+1,b.tx,b.ty+1);});
+BOSSES.forEach(b=>{if(b.island===undefined)return;const I=ISLANDS[b.island];carve(I.x,I.y+1,Math.floor(b.x/T),Math.floor(b.y/T));});
 // boats
-ISLANDS.forEach((I,k)=>{(I.boats||[]).forEach(a=>{for(let s=0;s<I.r*2.5;s+=.5){const tx=Math.floor(I.x+Math.cos(a)*s),ty=Math.floor(I.y+Math.sin(a)*s);if(tx<0||ty<0||tx>=MW||ty>=MH)break;const i=ty*MW+tx;if(terr[i]<=1){BOATS.push({x:(tx+.5)*T,y:(ty+.5)*T,face:Math.cos(a)>0?1:-1,home:k});break;}}});});
-// path paint for gardens: soil under plants handled in draw
+ISLANDS.forEach((I,k)=>{(I.boats||[]).forEach(a=>{for(let s=0;s<I.r*2.5;s+=.5){const tx=Math.floor(I.x+Math.cos(a)*s),ty=Math.floor(I.y+Math.sin(a)*s);if(tx<0||ty<0||tx>=MW||ty>=MH)break;const i=ty*MW+tx;if(terr[i]<=1){BOATS.push({x:(tx+.5)*T,y:(ty+.5)*T,face:Math.cos(a)>0?1:-1,home:k});carve(I.x,I.y+1,tx,ty);break;}}});});
 
 // minimap image
 const mm=document.createElement('canvas');mm.width=MW;mm.height=MH;
@@ -364,8 +431,9 @@ const mm=document.createElement('canvas');mm.width=MW;mm.height=MH;
  g.putImageData(img,0,0);}
 
 // ================= state =================
-const SAVE_KEY='petIslandsSave_v1';
-function defaultState(){return{name:'Addison',char:'👧',pets:['dog'],inv:{},wins:0,losses:0,race:{you:0,rival:0},bossAwake:false,bossBonus:0,bossBeaten:0,maxE:100,px:ISLANDS[0].cx,py:ISLANDS[0].cy,boats:null,talked:{},seen:{},intro:false};}
+const SAVE_KEY='petIslandsSave_v2';
+function defaultState(){return{name:'Addison',char:'👧',pets:['dog'],inv:{},wins:0,losses:0,race:{you:0,rival:0},bossAwake:false,bossBonus:0,bossBeaten:0,maxE:100,px:ISLANDS[0].cx,py:ISLANDS[0].cy,boats:null,talked:{},seen:{},read:{},team:['dog'],intro:false};}
+function refreshBoss(){BOSS=BOSSES[(S.bossBeaten||0)%BOSSES.length];}
 let S=defaultState();
 function save(){try{S.px=P.x;S.py=P.y;if(P.mode!=='walk'&&scene==='world'){/* save on land spot near if flying/boat */}S.boats=BOATS.map(b=>[Math.round(b.x),Math.round(b.y)]);S.mode=P.mode==='boat'?'boat':P.mode;S.boatIdx=P.boat?BOATS.indexOf(P.boat):-1;localStorage.setItem(SAVE_KEY,JSON.stringify(S));}catch(e){}}
 function loadSave(){try{const s=localStorage.getItem(SAVE_KEY);if(!s)return null;return JSON.parse(s);}catch(e){return null;}}
@@ -376,7 +444,7 @@ let scene='title',curIsland=-1,lastIsland=-2,curMuseum=null,museumDoor=null;
 let nearAct=null;
 
 function syncPets(){pets=S.pets.map((id,i)=>{const old=pets.find(p=>p.id===id);return old||{id,x:P.x-10-i*6,y:P.y+8,face:1};});}
-function resetTrail(){P.trail=[];for(let i=0;i<120;i++)P.trail.push({x:P.x,y:P.y});pets.forEach((p,i)=>{p.x=P.x-12*(i+1)*0.5;p.y=P.y+6;});}
+function resetTrail(){P.trail=[];for(let i=0;i<240;i++)P.trail.push({x:P.x,y:P.y});pets.forEach((p,i)=>{p.x=P.x-12*(i+1)*0.5;p.y=P.y+6;});}
 
 // ================= UI: toasts, dialog, overlay =================
 // A toast removes itself two ways: a timer, and a CSS fade that hides it even if the timer never fires (seen on Fire tablets).
@@ -419,7 +487,7 @@ function findAct(){
     NPCS.forEach(n=>{const d=dist(n.x,n.y,P.x,P.y);if(d<54)take(d,{type:'npc',o:n,x:n.x,y:n.y-14,label:'Talk to '+n.name});});
     ANIMALS.forEach(a=>{if(hasPet(a.pet))return;const d=dist(a.x,a.y,P.x,P.y);if(d<54)take(d,{type:'animal',o:a,x:a.x,y:a.y-14,label:'Meet '+PETS[a.pet].short});});
     BUILDINGS.forEach(b=>{if(!b.door)return;const d=dist(b.door.x,b.door.y,P.x,P.y);if(d<44)take(d,{type:b.k,o:b,x:b.door.x,y:b.door.y-20,label:b.k==='museum'?'Go into '+MUSEUMS[b.museum].name:'Take a nap at home'});});
-    if(S.bossAwake&&BOSS){const d=dist(BOSS.x,BOSS.y,P.x,P.y);if(d<70)take(d-20,{type:'boss',x:BOSS.x,y:BOSS.y-36,label:'Face the Shadow Dragon!'});}
+    if(S.bossAwake&&BOSS){const d=dist(BOSS.x,BOSS.y,P.x,P.y);if(d<70)take(d-20,{type:'boss',x:BOSS.x,y:BOSS.y-36,label:'Face '+BOSS.name+'!'});}
     BOATS.forEach(b=>{const d=dist(b.x,b.y,P.x,P.y);if(d<62)take(d+6,{type:'boat',o:b,x:b.x,y:b.y-26,label:'Get in the boat ⛵'});});
     PLANTS.forEach(p=>{if(!p.ripe)return;const d=dist(p.x,p.y,P.x,P.y);if(d<34)take(d,{type:'plant',o:p,x:p.x,y:p.y-18,label:'Pick '+CROPS[p.type].n});});
   }else if(P.mode==='boat'){
@@ -453,32 +521,32 @@ function talkNPC(n){
   }else say({name:n.name,emoji:n.e,text:line});
   if(first)hudDirty=true;
 }
+function needStatus(need){const parts=[];let ok=true;
+  if(need.items)for(const k in need.items){const have=S.inv[k]||0,n=need.items[k];if(have<n)ok=false;parts.push(`${have>=n?'✅':'⬜'} ${CROPS[k].e} ${Math.min(have,n)}/${n} ${CROPS[k].n.toLowerCase()}`);}
+  if(need.wins){if(S.wins<need.wins)ok=false;parts.push(`${S.wins>=need.wins?'✅':'⬜'} ⚔️ ${Math.min(S.wins,need.wins)}/${need.wins} battles won`);}
+  if(need.books){const r=Object.keys(S.read||{}).length;if(r<need.books)ok=false;parts.push(`${r>=need.books?'✅':'⬜'} 📖 ${Math.min(r,need.books)}/${need.books} books read`);}
+  return{ok,text:parts.join(' · ')};}
 function meetAnimal(a){
-  const pd=PETS[a.pet],need=a.need;
-  if(!need)return joinPet(a.pet);
-  if(need.item){const have=S.inv[need.item]||0;const cr=CROPS[need.item];
-    if(have>=need.n){say({name:pd.name,emoji:pd.e,text:`${pd.short} sniffs your backpack... ${cr.e} Can I have ${need.n} ${cr.n.toLowerCase()}${need.n>1?'s':''}?`,choices:[{label:`Give ${need.n} ${cr.e}`,fn:()=>{S.inv[need.item]-=need.n;joinPet(a.pet);}},{label:'Not yet',fn:()=>{}}]});}
-    else say({name:pd.name,emoji:pd.e,text:`${pd.short} looks hungry. It wants ${need.n} ${cr.e} ${cr.n.toLowerCase()}${need.n>1?'s':''}. You have ${have}. Find a garden!`});
-  }else if(need.wins){
-    if(S.wins>=need.wins)joinPet(a.pet);
-    else say({name:pd.name,emoji:pd.e,text:`${pd.short} only joins winners! Win ${need.wins} battle${need.wins>1?'s':''} ⚔️ (you have ${S.wins}). Talk to people with ⚔️ to battle.`});
-  }
+  S.talked['pet_'+a.pet]=1;const pd=PETS[a.pet];if(!a.need)return joinPet(a.pet);const st=needStatus(a.need);
+  if(st.ok){const gives=a.need.items?Object.keys(a.need.items).map(k=>`${a.need.items[k]} ${CROPS[k].e}`).join(' + '):'';
+    say({name:pd.name,emoji:pd.e,text:`${pd.short} trusts you now! ${gives?`It would love ${gives}.`:''} Ready to be friends?`,choices:[{label:gives?`Give ${gives}`:'Be friends! 💕',fn:()=>{if(a.need.items)for(const k in a.need.items)S.inv[k]-=a.need.items[k];joinPet(a.pet);}},{label:'Not yet',fn:()=>{}}]});}
+  else say({name:pd.name,emoji:pd.e,text:`${a.say||''} ${pd.short} isn't ready to join you yet. It needs: ${st.text}`});
 }
-function joinPet(id){if(hasPet(id))return;S.pets.push(id);syncPets();const p=pets[pets.length-1];p.x=P.x;p.y=P.y;SFX.unlock();hudDirty=true;save();
+function addPet(id){if(hasPet(id))return;S.pets.push(id);S.team=S.team||[];if(S.team.length<TEAM_MAX)S.team.push(id);syncPets();const p=pets[pets.length-1];if(p){p.x=P.x;p.y=P.y;}}
+function joinPet(id){if(hasPet(id))return;addPet(id);SFX.unlock();hudDirty=true;save();
   const pd=PETS[id];toast(`🎉 ${pd.name} joined your team!`,3200);
-  say({name:pd.name,emoji:pd.e,text:`Yay! ${pd.name} is your new pet! Power: ${pd.power}. ${pd.desc}${id==='cheetah'?' Zoom also makes you walk faster!':''}`});}
+  say({name:pd.name,emoji:pd.e,text:`Yay! ${pd.name} is your new pet! Power: ${pd.power}. ${pd.desc}${id==='cheetah'?' Zoom also makes you walk faster!':''} ${S.team.includes(id)?'It is on your battle team!':'Your battle team is full. Open the backpack 🎒 to swap pets.'}`});}
 
 function meetBoss(){
-  const hp=bossHP();
-  say({name:'Shadow Dragon',emoji:'🐉',text:`ROOOAR! Who dares wake me?! (Boss: ${hp} energy${S.bossBonus?`, extra strong because the rivals got here first`:''})`,choices:[{label:'⚔️ Battle the Dragon!',fn:()=>startBattle({name:'Shadow Dragon',e:'🐉',lvl:6,boss:true})},{label:'Not ready yet',fn:()=>{}}]});
+  const b=BOSS,hp=bossHP();
+  say({name:b.name,emoji:b.e,text:`ROOOAR! Who dares wake me?! (Boss: ${hp} energy${S.bossBonus?', extra strong because the rivals got here first':''}. Bosses are VERY hard. Bring your best 4 pets and lots of snacks!)`,choices:[{label:`⚔️ Battle ${b.name}!`,fn:()=>startBattle({name:b.name,e:b.e,boss:true})},{label:'Not ready yet',fn:()=>{}}]});
 }
-const bossHP=()=>300+S.bossBonus+S.bossBeaten*100;
 
 function enterMuseum(b){curMuseum=b.museum;museumDoor={x:b.door.x,y:b.door.y+4};scene='museum';P.x=(RW/2)*T;P.y=(RH-2.5)*T;P.mode='walk';resetTrail();
   toast(`🏛️ Welcome to ${MUSEUMS[b.museum].name}!`);if(!S.seen['m_'+b.museum]){S.seen['m_'+b.museum]=1;say({name:MUSEUMS[b.museum].name,emoji:'🏛️',text:'Walk up to the books and exhibits and press E to read or look at them!'});}}
 function exitMuseum(){scene='world';P.x=museumDoor.x;P.y=museumDoor.y;P.mode='walk';resetTrail();}
 function readExhibit(e){
-  if(e.book){e.book.forEach((pg,i)=>say({name:e.n,emoji:e.e,text:`📖 Page ${i+1}: ${pg}`,choices:[{label:i<e.book.length-1?'Next page ▶':'Close book'}]}));}
+  if(e.book){if(!S.read[e.n]){S.read[e.n]=1;toast(`📖 Books read: ${Object.keys(S.read).length}`);}e.book.forEach((pg,i)=>say({name:e.n,emoji:e.e,text:`📖 Page ${i+1}: ${pg}`,choices:[{label:i<e.book.length-1?'Next page ▶':'Close book'}]}));}
   else say({name:e.n,emoji:e.e,text:e.text});
 }
 
@@ -532,7 +600,7 @@ function drawWeather(){
 // ================= ambient critters =================
 const CRITTERS=[];
 ISLANDS.forEach((I,k)=>{for(let j=0;j<2;j++)CRITTERS.push({e:I.biome==='snow'?'🐦':'🦋',x:I.cx+rand(-80,80),y:I.cy+rand(-80,80),hx:I.cx,hy:I.cy,r:I.r*T*.5,ph:Math.random()*6,air:true});});
-for(let j=0;j<10;j++){let x,y,tries=0;do{x=rand(5,MW-5)*T;y=rand(5,MH-5)*T;tries++;}while(terr[tileIdx(x,y)]!==0&&tries<50);CRITTERS.push({e:pick(['🐬','🐟','🐢','🐳']),x,y,hx:x,hy:y,r:120,ph:Math.random()*6,air:false});}
+for(let j=0;j<28;j++){let x,y,tries=0;do{x=rand(5,MW-5)*T;y=rand(5,MH-5)*T;tries++;}while(terr[tileIdx(x,y)]!==0&&tries<50);CRITTERS.push({e:pick(['🐬','🐟','🐢','🐳']),x,y,hx:x,hy:y,r:120,ph:Math.random()*6,air:false});}
 
 // ================= input =================
 const keys={};
@@ -608,28 +676,36 @@ $('bSnd').onclick=()=>{muted=!muted;$('bSnd').textContent=muted?'🔇':'🔊';};
 
 // ================= overlays =================
 function openBag(){
+  const team=teamPets();
   let h='<h2>🎒 Backpack</h2>';
-  h+=`<h3>⭐ Boss Race</h3><div>You: <b>${S.race.you}/5</b> wins &nbsp; | &nbsp; Rival Team Thunder: <b>${S.race.rival}/5</b>. ${S.bossAwake?'🐉 <b>The Shadow Dragon is awake on Volcano Island!</b>':'Win 5 battles to wake the Shadow Dragon!'}</div>`;
-  h+=`<div style="margin-top:4px">Battles won: <b>${S.wins}</b> · lost: <b>${S.losses}</b> · Max energy: <b>${S.maxE}</b>${S.bossBeaten?` · Dragon beaten: <b>${S.bossBeaten}×</b> 🏆`:''}</div>`;
-  h+='<h3>🐾 Your Pets</h3>';
-  PET_ORDER.forEach(id=>{const p=PETS[id];if(hasPet(id))h+=`<div class="petCard"><div class="pe">${p.e}${p.badge||''}</div><div><b>${p.name}</b><br>⚡ <b>${p.power}</b>: ${p.desc}<br><i>${p.world}</i></div></div>`;
-    else h+=`<div class="petCard locked"><div class="pe">❓</div><div><b>Locked pet</b><br>${PET_HINT[id]}</div></div>`;});
+  h+=`<h3>⭐ Boss Race</h3><div>You: <b>${S.race.you}/${RACE}</b> wins &nbsp; | &nbsp; Rival Team Thunder: <b>${S.race.rival}/${RACE}</b>. ${S.bossAwake?`${BOSS.e} <b>${BOSS.name} is awake on ${ISLANDS[BOSS.island].name}!</b>`:`Win ${RACE} battles to wake the next boss: ${BOSS.name} ${BOSS.e}`}</div>`;
+  h+=`<div style="margin-top:4px">Battles won: <b>${S.wins}</b> · lost: <b>${S.losses}</b> · Max energy: <b>${S.maxE}</b> · Books read: <b>${Object.keys(S.read||{}).length}</b>${S.bossBeaten?` · Bosses beaten: <b>${S.bossBeaten}</b> 🏆`:''}</div>`;
+  h+=`<h3>⚔️ Battle Team (${team.length}/${TEAM_MAX})</h3><div style="font-size:14px">Only your team fights in battles. Tap a pet's button below to add it or take it out.</div>`;
+  h+=`<h3>🐾 Pets (${S.pets.length}/${PET_ORDER.length})</h3>`;
+  PET_ORDER.forEach(id=>{const p=PETS[id];
+    if(hasPet(id)){const on=team.includes(id);h+=`<div class="petCard"><div class="pe">${p.e}${p.badge||''}</div><div style="flex:1"><b>${p.name}</b><br>⚡ <b>${p.power}</b>: ${p.desc}<br><i>${p.world}</i></div><button class="choice ${on?'':'alt'}" data-team="${id}">${on?'⭐ On team':'+ Add to team'}</button></div>`;}
+    else{const a=ANIMALS.find(x=>x.pet===id);const hint=a?`Lives on ${ISLANDS[a.island].name}. Needs: ${a.need?needStatus(a.need).text:'nothing!'}`:BOSS_PET_HINT[id];
+      h+=`<div class="petCard locked"><div class="pe">${a&&S.talked['pet_'+id]?p.e:'❓'}</div><div><b>${a&&S.talked['pet_'+id]?p.name:'Secret animal'}</b><br>${hint}</div></div>`;}});
   h+='<h3>🧺 Snacks</h3><div class="items">';const items=Object.keys(CROPS).filter(k=>S.inv[k]>0);
   h+=items.length?items.map(k=>`<span>${CROPS[k].e} ${S.inv[k]} <small>(+${CROPS[k].heal} energy)</small></span>`).join(''):'<i>Empty! Walk over ripe veggies in a garden to pick them.</i>';
-  h+='</div><h3>⚙️ Game</h3><button class="choice alt" id="resetBtn">Start over (erase save)</button>';
-  openOverlay(h);
+  h+=`</div><div style="font-size:14px;margin-top:4px">You can eat up to ${SNACK_MAX} snacks in each battle.</div><h3>⚙️ Game</h3><button class="choice alt" id="resetBtn">Start over (erase save)</button>`;
+  const top=$('ovBox').scrollTop;openOverlay(h);$('ovBox').scrollTop=top;
+  $('ovBox').querySelectorAll('[data-team]').forEach(b=>b.onclick=()=>{const id=b.dataset.team;let t=teamPets();
+    if(t.includes(id)){if(t.length===1){toast('You need at least 1 pet on your team!');return;}t=t.filter(x=>x!==id);}
+    else{if(t.length>=TEAM_MAX){toast(`Your team is full (${TEAM_MAX}). Take a pet out first!`);return;}t.push(id);}
+    S.team=t;save();openBag();});
   $('resetBtn').onclick=()=>{const b=$('resetBtn');if(b.dataset.sure){try{localStorage.removeItem(SAVE_KEY);}catch(e){}location.reload();}else{b.dataset.sure=1;b.textContent='Tap again to really erase everything';b.style.background='var(--bad)';b.style.color='#fff';}};
 }
 function openMap(){
-  openOverlay('<h2>🗺️ Map of Pet Islands</h2><canvas id="mapCanvas" width="1020" height="720"></canvas><div style="margin-top:6px;font-size:14px">💗 = you · ⛵ = boats · ❓ = pets to find · 🐉 = boss (when awake)</div>');
-  const c=$('mapCanvas'),g=c.getContext('2d'),s=6;g.imageSmoothingEnabled=false;g.drawImage(mm,0,0,MW*s,MH*s);
+  openOverlay('<h2>🗺️ Map of Pet Islands</h2><canvas id="mapCanvas" width="1020" height="750"></canvas><div style="margin-top:6px;font-size:14px">💗 = you · ⛵ = boats · ❓ = animals to find · 🐉 = boss (when awake)</div>');
+  const c=$('mapCanvas'),g=c.getContext('2d'),s=3;g.imageSmoothingEnabled=false;g.drawImage(mm,0,0,MW*s,MH*s);
   g.textAlign='center';g.textBaseline='middle';
   const em=(e,x,y,sz)=>{g.font=`${sz}px ${EMOJI_FONT}`;g.fillText(e,x,y);};
-  BOATS.forEach(b=>em('⛵',b.x/T*s,b.y/T*s,22));
-  ANIMALS.forEach(a=>{if(!hasPet(a.pet))em('❓',a.x/T*s,a.y/T*s,22);});
+  BOATS.forEach(b=>em('⛵',b.x/T*s,b.y/T*s,16));
+  ANIMALS.forEach(a=>{if(!hasPet(a.pet))em('❓',a.x/T*s,a.y/T*s,18);});
   BUILDINGS.forEach(b=>{if(b.k==='museum')em('🏛️',b.x/T*s,b.y/T*s,30);if(b.k==='house')em('🏠',b.x/T*s,b.y/T*s,26);if(b.k==='volcano')em('🌋',b.x/T*s,b.y/T*s,36);});
-  if(S.bossAwake&&BOSS)em('🐉',BOSS.x/T*s,BOSS.y/T*s,30);
-  ISLANDS.forEach(I=>{g.font='800 22px "Baloo 2",sans-serif';g.lineWidth=5;g.strokeStyle='rgba(40,25,60,.85)';const y=(I.y-I.r-1.2)*s;g.strokeText(I.name,I.x*s,y);g.fillStyle='#fff';g.fillText(I.name,I.x*s,y);});
+  if(S.bossAwake&&BOSS)em(BOSS.e,BOSS.x/T*s,BOSS.y/T*s,30);
+  ISLANDS.forEach(I=>{g.font='800 18px "Baloo 2",sans-serif';g.lineWidth=4;g.strokeStyle='rgba(40,25,60,.85)';const y=(I.y-I.r-1.2)*s;g.strokeText(I.name,I.x*s,y);g.fillStyle='#fff';g.fillText(I.name,I.x*s,y);});
   em('💗',P.x/T*s,P.y/T*s,30);
 }
 function openHelp(){
@@ -650,7 +726,7 @@ function openHelp(){
   🐾 Your pets follow you everywhere and never hurt you.<br>
   ⚔️ People with swords over their heads want to battle. You can always say no!<br>
   💖 If your energy runs out in a battle, your animals rush in to save you and fight back!<br>
-  ⭐ Win battles to get closer to the Shadow Dragon. If you lose, Rival Team Thunder gets closer instead.<br>
+  ⭐ Win battles to wake the next boss. If you lose, Rival Team Thunder gets closer instead. Bosses are VERY hard!<br>
   🧺 Snacks from gardens heal you in battles. Rain makes gardens grow back faster.<br>
   ❓ Question marks on the map are animals you can unlock.</div>`);
 }
@@ -660,8 +736,8 @@ let hudDirty=true,hudT=0;
 function updateHUD(){
   $('who').textContent=`${S.char} ${S.name}`;
   $('petsRow').textContent=S.pets.map(id=>PETS[id].e).join('');
-  const st=(n,e,o)=>Array.from({length:5},(_,i)=>i<n?e:o).join('');
-  $('race').innerHTML=S.bossAwake?`<div>🐉 The Shadow Dragon is awake!</div><div class="bar">Sail to Volcano Island 🌋</div>`:`<div>Boss Race</div><div class="bar">You ${st(S.race.you,'⭐','☆')}</div><div class="bar">Rivals ${st(S.race.rival,'🌩️','·')}</div>`;
+  const st=(n,e,o)=>Array.from({length:RACE},(_,i)=>i<n?e:o).join('');
+  $('race').innerHTML=S.bossAwake?`<div>${BOSS.e} ${BOSS.name} is awake!</div><div class="bar">Go to ${ISLANDS[BOSS.island].name}</div>`:`<div>Boss Race</div><div class="bar">You ${st(S.race.you,'⭐','☆')}</div><div class="bar">Rivals ${st(S.race.rival,'🌩️','·')}</div>`;
   const ew=effWeather();$('weatherTag').textContent=ew==='inside'?'🏛️ Inside':`${WEATHER[ew].e} ${WEATHER[ew].n}`;
   const items=Object.keys(CROPS).filter(k=>S.inv[k]>0);$('invBar').innerHTML=items.map(k=>`<span>${CROPS[k].e}${S.inv[k]}</span>`).join('');
 }
@@ -682,7 +758,7 @@ function update(dt){
       else if(dest){const dx=dest.x-P.x,dy=dest.y-P.y,d=Math.hypot(dx,dy);if(d<5){if(!dest.hold)dest=null;}else{ax=dx/d;ay=dy/d;if(d<24){ax*=Math.max(.3,d/24);ay*=Math.max(.3,d/24);}}}}
     const m=Math.hypot(ax,ay);if(m>1){ax/=m;ay/=m;}
     const ox=P.x,oy=P.y;
-    const sp=P.mode==='fly'?280:P.mode==='boat'?230:(hasPet('cheetah')?190:150);
+    const sp=P.mode==='fly'?360:P.mode==='boat'?300:(hasPet('cheetah')?200:160);
     P.moving=m>0.1;
     if(P.moving){const mx=ax*sp*dt,my=ay*sp*dt;
       if(canMove(P.x+mx,P.y))P.x+=mx;if(canMove(P.x,P.y+my))P.y+=my;
@@ -691,10 +767,10 @@ function update(dt){
     if(P.boat){P.boat.x=P.x;P.boat.y=P.y;P.boat.face=P.face;}
     P.alt+=((P.mode==='fly'?1:0)-P.alt)*Math.min(1,dt*6);
     // trail
-    const L=P.trail[0];if(!L||dist(L.x,L.y,P.x,P.y)>3){P.trail.unshift({x:P.x,y:P.y});if(P.trail.length>160)P.trail.pop();}
+    const L=P.trail[0];if(!L||dist(L.x,L.y,P.x,P.y)>3){P.trail.unshift({x:P.x,y:P.y});if(P.trail.length>240)P.trail.pop();}
     pets.forEach((p,i)=>{let tx,ty;
       if(P.mode==='boat'){const offs=[[-14,-2],[14,-2],[-6,8],[8,8],[-20,6],[20,6],[0,-10],[-12,12],[12,12]];const o=offs[i%offs.length];tx=P.x+o[0]*P.face;ty=P.y+o[1]-2;}
-      else{const tp=P.trail[Math.min(P.trail.length-1,(i+1)*9)]||P;tx=tp.x;ty=tp.y;}
+      else{const tp=P.trail[Math.min(P.trail.length-1,(i+1)*8)]||P;tx=tp.x;ty=tp.y;}
       const k=1-Math.exp(-(P.mode==='boat'?14:8)*dt);const ox=p.x;p.x+=(tx-p.x)*k;p.y+=(ty-p.y)*k;if(Math.abs(p.x-ox)>0.3)p.face=p.x>ox?1:-1;p.moving=Math.abs(p.x-ox)+Math.abs(ty-p.y)>0.5;
       if(id_isUnicorn(p)&&p.moving&&Math.random()<.3)sparkles.push({x:p.x+rand(-6,6),y:p.y+rand(-4,4),t:0.8,c:pick(['#ff6fa8','#ffd93d','#6be3ff','#b28dff'])});});
     // auto-pick
@@ -761,7 +837,7 @@ function drawBuilding(b){
   if(b.k==='museum'){ctx.fillStyle='rgba(0,0,0,.15)';ctx.beginPath();ctx.ellipse(b.x,b.y+12,52,11,0,0,6.3);ctx.fill();drawEmoji('🏛️',b.x,b.y-18,84);label(MUSEUMS[b.museum].name,b.x,b.y+24,11,'#ffe27a');}
   if(b.k==='volcano'){drawEmoji('🌋',b.x,b.y-24,150);if(!S.bossAwake){drawEmoji('💤',b.x+40,b.y-80+Math.sin(time*2)*4,24);}else{ctx.fillStyle=`rgba(255,80,40,${.25+.15*Math.sin(time*5)})`;ctx.beginPath();ctx.arc(b.x,b.y-80,30,0,6.3);ctx.fill();}}
 }
-function drawBossWorld(){if(!S.bossAwake)return;const g=ctx.createRadialGradient(BOSS.x,BOSS.y-20,4,BOSS.x,BOSS.y-20,60);g.addColorStop(0,'rgba(60,0,80,.55)');g.addColorStop(1,'rgba(60,0,80,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(BOSS.x,BOSS.y-20,60,0,6.3);ctx.fill();drawEmoji('🐉',BOSS.x,BOSS.y-22+Math.sin(time*2)*4,64);label('Shadow Dragon',BOSS.x,BOSS.y+20,12,'#ff9ad5');}
+function drawBossWorld(){if(!S.bossAwake)return;const g=ctx.createRadialGradient(BOSS.x,BOSS.y-20,4,BOSS.x,BOSS.y-20,60);g.addColorStop(0,'rgba(60,0,80,.55)');g.addColorStop(1,'rgba(60,0,80,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(BOSS.x,BOSS.y-20,60,0,6.3);ctx.fill();drawEmoji(BOSS.e,BOSS.x,BOSS.y-22+Math.sin(time*2)*4,64);label(BOSS.name,BOSS.x,BOSS.y+20,12,'#ff9ad5');}
 function drawNPC(n){const bob=Math.sin(time*2+n.x)*1.2;ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(n.x,n.y+10,11,4,0,0,6.3);ctx.fill();drawEmoji(n.e,n.x,n.y-6+bob,28);label(n.name,n.x,n.y+18,9);
   if(n.fight)drawEmoji('⚔️',n.x,n.y-34+Math.sin(time*4)*2,14);else if(!S.talked[n.id])drawEmoji('💬',n.x+14,n.y-28+Math.sin(time*4)*2,14);}
 function drawWild(a){const pd=PETS[a.pet],bob=Math.abs(Math.sin(time*3+a.x))*4;ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(a.x,a.y+10,11,4,0,0,6.3);ctx.fill();
@@ -818,19 +894,23 @@ function drawMuseum(){
 
 // ================= battle =================
 let B=null;
+const RACE=7,TEAM_MAX=4,SNACK_MAX=3,PET_REST=4;
 const MOVES=[{n:'Water Balloon',e:'🎈'},{n:'Pillow Toss',e:'☁️'},{n:'Snowball',e:'⚪'},{n:'Tickle Attack',e:'🪶'},{n:'Mud Pie',e:'🟤'},{n:'Confetti Blast',e:'🎊'}];
-const BOSS_MOVES=[{n:'Shadow Puff',e:'💨'},{n:'Grumpy Roar',e:'💥'},{n:'Tail Swoosh',e:'🌀'}];
+function teamPets(){const t=(S.team||[]).filter(hasPet);return (t.length?t:S.pets).slice(0,TEAM_MAX);}
+const bossHP=()=>BOSS.hp+S.bossBonus+Math.floor(S.bossBeaten/BOSSES.length)*400;
 function startBattle(opp){
-  const hp=opp.boss?bossHP():50+opp.lvl*22+Math.min(S.wins,10)*4;
-  B={opp,ename:opp.name,ee:opp.e,ehp:hp,emax:hp,atk:opp.boss?[14,20]:[5+opp.lvl*2,9+opp.lvl*2],hp:S.maxE,max:S.maxE,cd:{},shield:0,dodge:false,stun:0,rescued:false,busy:false,over:false,fx:[],eShake:0,pShake:0,hop:{},turn:0,menu:null,
-     biome:(ISLANDS[curIsland]||ISLANDS[0]).biome,intro:1,result:null};
+  const boss=opp.boss?BOSS:null,lvl=opp.lvl||8;
+  const hp=boss?bossHP():80+lvl*35+Math.min(S.wins,15)*6;
+  const atk=boss?boss.atk.slice():[5+lvl*3,9+lvl*3];
+  B={opp,boss,lvl,ename:opp.name,ee:opp.e,ehp:hp,emax:hp,atk,hp:S.maxE,max:S.maxE,team:teamPets(),cd:{},shield:0,dodge:false,stun:0,weak:0,rescued:false,busy:false,over:false,
+     fx:[],eShake:0,pShake:0,hop:{},turn:0,menu:null,snacks:0,healed:false,enraged:false,biome:(ISLANDS[curIsland]||ISLANDS[0]).biome,result:null};
   scene='battle';$('hud').classList.add('hidden');$('battleUI').classList.remove('hidden');
-  bmsg(opp.boss?'The Shadow Dragon roars! This is the big one! 🐉':`${opp.name} wants a friendly battle! Pick a move!`);renderBtns();SFX.zap();
+  bmsg(boss?`${boss.name} roars! This is a BOSS battle! ${boss.e}`:`${opp.name} wants a battle! Pick a move!`);renderBtns();SFX.zap();
 }
 function bmsg(t){$('bmsg').textContent=t;}
 function layout(){const ph=$('battleUI').offsetHeight||170;const bh=VH-ph;const s=Math.min(VW,bh*1.4);
   return{bh,s,EP:{x:VW*.72,y:bh*.42},PP:{x:VW*.3,y:bh*.8}};}
-const PET_OFFS=[[-.14,-.02],[.12,-.05],[-.05,-.13],[-.22,-.11],[.06,-.17],[-.16,-.22],[.18,-.14],[-.02,-.26],[-.26,-.02]];
+const PET_OFFS=[[-.15,-.02],[.13,-.05],[-.05,-.15],[-.24,-.12]];
 function petPos(i,L){const o=PET_OFFS[i%PET_OFFS.length];return{x:L.PP.x+o[0]*L.s*.9,y:L.PP.y+o[1]*L.s*.9};}
 function renderBtns(){
   const box=$('bbtns');box.innerHTML='';if(!B)return;
@@ -840,85 +920,111 @@ function renderBtns(){
     items.forEach(k=>add(`${CROPS[k].e} ${CROPS[k].n} ×${S.inv[k]}<span class="p">+${CROPS[k].heal} energy</span>`,'snack',()=>playerAction('snack',k),B.busy));
     add('↩ Back','',()=>{B.menu=null;renderBtns();});return;}
   add('💦 Splash Attack<span class="p">your own move</span>','main',()=>playerAction('splash'),B.busy);
-  S.pets.forEach(id=>{const p=PETS[id],cd=B.cd[id]||0;add(`${p.e} ${p.power}<span class="p">${cd?`resting… ${cd}`:p.short}</span>`,'',()=>playerAction('pet',id),B.busy||cd>0);});
-  const n=Object.keys(CROPS).reduce((a,k)=>a+(S.inv[k]||0),0);
-  add(`🧺 Snack<span class="p">${n?n+' snacks':'no snacks'}</span>`,'snack',()=>{B.menu='snack';renderBtns();},B.busy||!n);
+  B.team.forEach(id=>{const p=PETS[id],cd=B.cd[id]||0;add(`${p.e} ${p.power}<span class="p">${cd?`resting… ${cd}`:p.short}</span>`,'',()=>playerAction('pet',id),B.busy||cd>0);});
+  const n=Object.keys(CROPS).reduce((a,k)=>a+(S.inv[k]||0),0),left=SNACK_MAX-B.snacks;
+  add(`🧺 Snack<span class="p">${!n?'no snacks':left<=0?'too full!':left+' left this battle'}</span>`,'snack',()=>{B.menu='snack';renderBtns();},B.busy||!n||left<=0);
 }
 function fxText(t,x,y,c){B.fx.push({k:'text',t,x,y,c,life:1.2,age:0});}
 function fxBurst(x,y,cols,n=18){for(let i=0;i<n;i++){const a=Math.random()*6.3,v=rand(60,220);B.fx.push({k:'dot',x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,c:pick(cols),life:rand(.5,1),age:0});}}
 function shoot(e,from,to,dur=.5,size=40){return new Promise(r=>{B.fx.push({k:'proj',e,x0:from.x,y0:from.y,x1:to.x,y1:to.y,age:0,life:dur,size,done:r});});}
 function hitEnemy(n,crit){const L=layout();B.ehp=Math.max(0,B.ehp-n);B.eShake=.4;fxText((crit?'DOUBLE! ':'')+'-'+n,L.EP.x,L.EP.y-L.s*.12,crit?'#ffc53d':'#ff5e57');fxBurst(L.EP.x,L.EP.y,['#fff','#ffd93d','#ff8fb1']);SFX.hit();}
 function healMe(n){const L=layout();const h=Math.min(n,B.max-B.hp);B.hp+=h;fxText('+'+h,L.PP.x,L.PP.y-L.s*.12,'#2fbf71');fxBurst(L.PP.x,L.PP.y,['#7dffb0','#fff','#b6ffcf']);SFX.heal();}
-function petFrom(id){const L=layout();const i=S.pets.indexOf(id);B.hop[id]=.5;return petPos(i,L);}
+function petFrom(id){const L=layout();const i=Math.max(0,B.team.indexOf(id));B.hop[id]=.5;return petPos(i,L);}
 const POWERS={
-  dog:async()=>{const L=layout();await shoot('💥',petFrom('dog'),L.EP,.45);hitEnemy(ri(20,26));if(Math.random()<.5){B.stun=1;bmsg('WOOF! The other side is too surprised to move!');}},
+  dog:async()=>{const L=layout();await shoot('💥',petFrom('dog'),L.EP,.45);hitEnemy(ri(20,26));if(!B.boss&&Math.random()<.5){B.stun=1;bmsg('WOOF! The other side is too surprised to move!');}},
   cat:async()=>{petFrom('cat');await wait(300);healMe(25);B.dodge=true;bmsg('Purrr... You feel lucky! You will dodge the next attack. 🍀');},
+  blackcat:async()=>{const L=layout();await shoot('🌙',petFrom('blackcat'),L.EP,.4);hitEnemy(ri(22,28));B.dodge=true;bmsg('Night Swipe! Midnight hides you in the shadows. You will dodge the next attack!');},
   unicorn:async()=>{const L=layout();await shoot('🌈',petFrom('unicorn'),L.EP,.6,56);hitEnemy(ri(35,45));fxBurst(L.EP.x,L.EP.y,['#ff5e57','#feca57','#48dbfb','#a55eea','#2ecc71'],30);},
   cheetah:async()=>{const L=layout();for(let k=0;k<3;k++){await shoot('⚡',petFrom('cheetah'),L.EP,.22,34);hitEnemy(ri(9,13));}},
   leopard:async()=>{const L=layout();await shoot('🐾',petFrom('leopard'),L.EP,.45,44);const c=Math.random()<.3;hitEnemy(ri(25,32)*(c?2:1),c);},
+  lion:async()=>{const L=layout();await shoot('👑',petFrom('lion'),L.EP,.5,52);hitEnemy(ri(40,50));},
+  tiger:async()=>{const L=layout();await shoot('🐯',petFrom('tiger'),L.EP,.45,50);hitEnemy(ri(30,38));B.weak=1;bmsg('Tiger Roar! The other side is scared and will hit softer next time!');},
   fish:async()=>{petFrom('fish');await wait(300);B.shield=2;const L=layout();fxBurst(L.PP.x,L.PP.y,['#9fe3ff','#ffffff','#5fd3ea'],24);SFX.heal();bmsg('Bubble Shield! It will block the next 2 attacks! 🫧');},
   penguin:async()=>{const L=layout();await shoot('❄️',petFrom('penguin'),L.EP,.45);hitEnemy(ri(18,24));B.stun=1;bmsg('Ice Slide! The other side is frozen for a turn! 🧊');},
   bunny:async()=>{petFrom('bunny');await wait(300);healMe(45);},
+  deer:async()=>{petFrom('deer');await wait(300);healMe(20);B.shield=Math.max(B.shield,1);bmsg('Forest Blessing! You healed, and a leaf shield will block the next attack. 🍃');},
+  fox:async()=>{const L=layout();await shoot('🍂',petFrom('fox'),L.EP,.4);hitEnemy(ri(20,26));healMe(12);},
+  kangaroo:async()=>{const L=layout();for(let k=0;k<2;k++){await shoot('🥊',petFrom('kangaroo'),L.EP,.3,38);hitEnemy(ri(12,16));}},
+  koala:async()=>{const L=layout();await shoot('🎵',petFrom('koala'),L.EP,.5);if(Math.random()<.6){B.stun=1;bmsg('Sleepy Song... the other side fell asleep! 💤');}else{hitEnemy(10);bmsg('Sleepy Song... they yawned, but stayed awake!');}},
   dragon:async()=>{const L=layout();await shoot('🌟',petFrom('dragon'),L.EP,.55,60);hitEnemy(ri(55,70));fxBurst(L.EP.x,L.EP.y,['#ffd93d','#ff9f43','#fff'],30);},
+  octopus:async()=>{const L=layout();await shoot('💧',petFrom('octopus'),L.EP,.5,52);hitEnemy(ri(35,42));B.stun=1;bmsg('Ink Splash! The other side can\'t see and loses a turn!');},
+  rex:async()=>{const L=layout();await shoot('💥',petFrom('rex'),L.EP,.5,64);hitEnemy(ri(70,85));fxBurst(L.EP.x,L.EP.y,['#9bd16b','#fff','#ffd93d'],30);},
 };
 async function playerAction(kind,arg){
   if(!B||B.busy||B.over)return;B.busy=true;B.menu=null;renderBtns();
   const L=layout();
   if(kind==='splash'){bmsg(`${S.name} used Splash Attack!`);await shoot('💦',L.PP,L.EP,.45);hitEnemy(ri(10,16));}
-  else if(kind==='pet'){const p=PETS[arg];bmsg(`${p.short} used ${p.power}!`);await POWERS[arg]();B.cd[arg]=3;}
-  else if(kind==='snack'){S.inv[arg]--;bmsg(`You ate a ${CROPS[arg].n.toLowerCase()}. Yum! ${CROPS[arg].e}`);B.fx.push({k:'proj',e:CROPS[arg].e,x0:L.PP.x,y0:L.PP.y-80,x1:L.PP.x,y1:L.PP.y,age:0,life:.4,size:36,done:()=>{}});await wait(400);healMe(CROPS[arg].heal);}
+  else if(kind==='pet'){const p=PETS[arg];bmsg(`${p.short} used ${p.power}!`);await POWERS[arg]();B.cd[arg]=PET_REST;}
+  else if(kind==='snack'){S.inv[arg]--;B.snacks++;bmsg(`You ate a ${CROPS[arg].n.toLowerCase()}. Yum! ${CROPS[arg].e}`);B.fx.push({k:'proj',e:CROPS[arg].e,x0:L.PP.x,y0:L.PP.y-80,x1:L.PP.x,y1:L.PP.y,age:0,life:.4,size:36,done:()=>{}});await wait(400);healMe(CROPS[arg].heal);}
   await wait(650);
   if(B.ehp<=0)return win();
   await enemyTurn();
 }
+// Each incoming hit can be blocked by a shield, dodged, or lands.
+function takeHit(dmg){const L=layout();
+  if(B.shield>0){B.shield--;fxText('Blocked!',L.PP.x,L.PP.y-L.s*.12,'#4fc3f7');bmsg('Your shield blocked it! 🫧');}
+  else if(B.dodge){B.dodge=false;fxText('Dodged!',L.PP.x,L.PP.y-L.s*.12,'#b28dff');bmsg('You dodged it! 🍀');}
+  else{B.hp=Math.max(0,B.hp-dmg);B.pShake=.4;fxText('-'+dmg,L.PP.x,L.PP.y-L.s*.12,'#ff5e57');SFX.hit();}}
 async function enemyTurn(){
   B.turn++;const L=layout();
-  if(B.stun>0){B.stun=0;bmsg(`${B.ename} is too surprised to move!`);await wait(1000);return endRound();}
-  let mv;if(B.opp.boss&&B.turn%3===0)mv={n:'Shadow Storm',e:'🌪️',dmg:ri(26,32)};else{const m=pick(B.opp.boss?BOSS_MOVES:MOVES);mv={...m,dmg:ri(B.atk[0],B.atk[1])};}
-  bmsg(`${B.ename} used ${mv.n}!`);await wait(450);await shoot(mv.e,L.EP,L.PP,.5,B.opp.boss?54:40);
-  if(B.shield>0){B.shield--;fxText('Blocked!',L.PP.x,L.PP.y-L.s*.12,'#4fc3f7');bmsg('The Bubble Shield blocked it! 🫧');}
-  else if(B.dodge){B.dodge=false;fxText('Dodged!',L.PP.x,L.PP.y-L.s*.12,'#b28dff');bmsg('You dodged it! Lucky purr! 🍀');}
-  else{B.hp=Math.max(0,B.hp-mv.dmg);B.pShake=.4;fxText('-'+mv.dmg,L.PP.x,L.PP.y-L.s*.12,'#ff5e57');SFX.hit();}
+  if(B.stun>0){B.stun=0;if(B.boss&&Math.random()<.5){bmsg(`${B.ename} shook it off! Bosses are tough! 💪`);await wait(1000);}else{bmsg(`${B.ename} can't move this turn!`);await wait(1000);return endRound();}}
+  // bosses get angry once, when half beaten
+  if(B.boss&&!B.enraged&&B.ehp<=B.emax/2){B.enraged=true;B.atk=B.atk.map(v=>Math.round(v*1.3));const h=Math.round(B.emax*.1);B.ehp=Math.min(B.emax,B.ehp+h);B.eShake=.6;
+    fxText('+'+h,L.EP.x,L.EP.y-L.s*.12,'#2fbf71');bmsg(`${B.ename} is ANGRY! 😡 It healed a little and now hits harder!`);SFX.thunder();await wait(1500);}
+  // regular battlers can eat one snack when they get low
+  if(!B.boss&&!B.healed&&B.ehp<B.emax*.4&&Math.random()<.5){B.healed=true;const h=Math.round(B.emax*.2);B.ehp=Math.min(B.emax,B.ehp+h);
+    fxText('+'+h,L.EP.x,L.EP.y-L.s*.12,'#2fbf71');bmsg(`${B.ename} ate a snack and healed! 🍪`);await wait(1200);return endRound();}
+  const sp=B.boss&&B.turn%B.boss.special.every===0?B.boss.special:null;let mv;
+  if(sp)mv={...sp,dmg:ri(sp.dmg[0],sp.dmg[1])};
+  else if(!B.boss&&B.lvl>=4&&B.turn%4===0)mv={n:'Power Throw',e:'☄️',dmg:Math.round(ri(B.atk[0],B.atk[1])*1.6)};
+  else{const m=pick(B.boss?B.boss.moves:MOVES);mv={...m,dmg:ri(B.atk[0],B.atk[1])};}
+  if(B.weak){mv.dmg=Math.round(mv.dmg*.6);B.weak=0;}
+  bmsg(`${B.ename} used ${mv.n}!${sp?' 😱':''}`);await wait(450);
+  const hits=mv.double?2:1;
+  for(let h=0;h<hits&&B.hp>0;h++){await shoot(mv.e,L.EP,L.PP,.45,B.boss?54:40);takeHit(mv.dmg);if(h<hits-1)await wait(250);}
+  if(mv.freeze&&B.hp>0){B.team.forEach(id=>B.cd[id]=Math.max(B.cd[id]||0,2));await wait(500);bmsg('Brrr! Ink Blizzard froze all your pets for a turn! ❄️');}
   await wait(750);
   if(B.hp<=0){if(!B.rescued){await rescue();if(B.ehp<=0)return win();}else return lose();}
   endRound();
 }
 async function rescue(){
-  B.rescued=true;const L=layout();
+  B.rescued=true;const L=layout();const n=B.team.length;
   bmsg('Oh no, you fainted! 😵 ...But wait! Your animals are rushing in to help!');await wait(1500);
-  for(let k=0;k<10;k++)B.fx.push({k:'proj',e:'💖',x0:petPos(k%S.pets.length,L).x,y0:petPos(k%S.pets.length,L).y,x1:L.PP.x+rand(-30,30),y1:L.PP.y+rand(-30,10),age:-k*.06,life:.6,size:26,done:()=>{}});
-  await wait(800);B.hp=0;healMe(Math.round(B.max*.6));bmsg('Your pets gave you a big hug! You got back up! 💖');await wait(1100);
+  for(let k=0;k<10;k++)B.fx.push({k:'proj',e:'💖',x0:petPos(k%n,L).x,y0:petPos(k%n,L).y,x1:L.PP.x+rand(-30,30),y1:L.PP.y+rand(-30,10),age:-k*.06,life:.6,size:26,done:()=>{}});
+  await wait(800);B.hp=0;healMe(Math.round(B.max*.45));bmsg('Your pets gave you a big hug! You got back up! 💖');await wait(1100);
   bmsg('TEAM POWER! All your animals attack together!');
-  for(const id of S.pets){if(B.ehp<=0)break;const from=petFrom(id);await shoot(PETS[id].e,from,L.EP,.3,40);hitEnemy(ri(12,18));}
+  for(const id of B.team){if(B.ehp<=0)break;const from=petFrom(id);await shoot(PETS[id].e,from,L.EP,.3,40);hitEnemy(ri(10,15));}
   B.cd={};B.shield=Math.max(B.shield,1);await wait(700);
-  if(B.ehp>0)bmsg('Your animals have your back! All powers are ready, plus a bubble shield!');
-  await wait(900);
+  if(B.ehp>0)bmsg('Your animals have your back! All powers are ready, plus a shield! But this is your last chance!');
+  await wait(1100);
 }
 function endRound(){if(!B||B.over)return;for(const k in B.cd)if(B.cd[k]>0)B.cd[k]--;B.busy=false;bmsg('Your turn! What will you do?');renderBtns();}
 function win(){
   B.over=true;B.result='win';SFX.win();const L=layout();for(let k=0;k<4;k++)setTimeout(()=>B&&fxBurst(rand(VW*.2,VW*.8),rand(50,L.bh*.6),['#ff5fa2','#ffc53d','#7b5cff','#2fbf71','#48dbfb'],30),k*250);
-  S.wins++;S.maxE=Math.min(180,S.maxE+5);
-  const rewards=[];for(let k=0;k<2;k++){const c=pick(Object.keys(CROPS));S.inv[c]=(S.inv[c]||0)+1;rewards.push(CROPS[c].e);}
+  S.wins++;S.maxE=Math.min(220,S.maxE+4);
+  const rewards=[];for(let k=0;k<(B.boss?6:2);k++){const c=pick(Object.keys(CROPS));S.inv[c]=(S.inv[c]||0)+1;rewards.push(CROPS[c].e);}
   B.notes=[];
-  if(B.opp.boss){S.bossBeaten++;S.bossAwake=false;S.race={you:0,rival:0};S.bossBonus=0;
-    B.notes.push({name:'Shadow Dragon',emoji:'🐉',text:'The shadows float away... The dragon shrinks into a tiny, happy baby dragon! "Thank you! I was so lonely in that volcano."'});
-    if(!hasPet('dragon')){S.pets.push('dragon');syncPets();B.notes.push({name:'Ember the Baby Dragon',emoji:'🐲',text:'Ember the Baby Dragon joined your team! Power: Star Breath, the strongest power of all! 🌟'});}
-    B.notes.push({name:'Champion!',emoji:'🏆',text:`${S.name}, you are the CHAMPION of Pet Islands! Win 5 more battles to face a new, even stronger shadow challenge!`});
-    bmsg(`🏆 YOU BEAT THE SHADOW DRAGON! You got ${rewards.join(' ')}!`);
+  if(B.boss){const b=B.boss;S.bossBeaten++;S.bossAwake=false;S.race={you:0,rival:0};S.bossBonus=0;
+    B.notes.push({name:b.name,emoji:b.e,text:b.winText});
+    if(!hasPet(b.reward)){addPet(b.reward);const pd=PETS[b.reward];B.notes.push({name:pd.name,emoji:pd.e,text:`${pd.name} joined your team! Power: ${pd.power}. ${pd.desc}`});}
+    refreshBoss();
+    B.notes.push({name:'Champion!',emoji:'🏆',text:`${S.name}, you beat ${b.name}! Win ${RACE} more battles to wake the next boss: ${BOSS.name} ${BOSS.e}. It is even stronger!`});
+    bmsg(`🏆 YOU BEAT ${b.name.toUpperCase()}! You got ${rewards.join(' ')}!`);
   }else{
-    if(!S.bossAwake)S.race.you=Math.min(5,S.race.you+1);
-    if(S.race.you>=5&&!S.bossAwake){S.bossAwake=true;B.notes.push({name:'Wizard Ember',emoji:'🧙',text:'RUMBLE RUMBLE! 🌋 The Shadow Dragon woke up on Volcano Island (far southeast)! Sail there to battle it!'});}
-    bmsg(`🏆 You won! You got ${rewards.join(' ')} and +5 max energy! ${S.bossAwake?'The dragon is waiting!':`⭐ ${5-S.race.you} more win${5-S.race.you===1?'':'s'} to wake the boss!`}`);
-    if(S.wins===1&&!hasPet('cheetah'))B.notes.push({name:'Tip',emoji:'🐆',text:'You won your first battle! Zoom the cheetah on Savanna Island will join you now!'});
-    if(S.wins===3&&!hasPet('penguin'))B.notes.push({name:'Tip',emoji:'🐧',text:'3 wins! Waddles the penguin on Frosty Island will join you now!'});
+    if(!S.bossAwake)S.race.you=Math.min(RACE,S.race.you+1);
+    if(S.race.you>=RACE&&!S.bossAwake){S.bossAwake=true;B.notes.push({name:'Wizard Ember',emoji:'🧙',text:BOSS.wake});}
+    const left=RACE-S.race.you;
+    bmsg(`🏆 You won! You got ${rewards.join(' ')} and +4 max energy! ${S.bossAwake?`${BOSS.name} is waiting!`:`⭐ ${left} more win${left===1?'':'s'} to wake the boss!`}`);
+    const ready=ANIMALS.filter(a=>!hasPet(a.pet)&&a.need&&a.need.wins===S.wins).map(a=>PETS[a.pet]);
+    if(ready.length)B.notes.push({name:'New friends?',emoji:ready[0].e,text:`${S.wins} wins! ${ready.map(p=>p.short).join(' and ')} might trust you now. Check your backpack 🎒 to see what else they need.`});
   }
   save();renderBtns();
 }
 function lose(){
   B.over=true;B.result='lose';SFX.lose();S.losses++;B.notes=[];
   S.race.rival++;
-  if(S.race.rival>=5){S.race.rival=0;S.bossBonus+=50;B.notes.push({name:'Rival Team Thunder',emoji:'🌩️',text:'Rival Team Thunder reached the Shadow Dragon first! They didn\'t win, but the dragon got even stronger. (+50 energy)'});}
-  bmsg(`${B.ename} won this time. Your pets cuddle you, you're all better! 🌩️ Rivals are ${S.race.rival===0?'resetting':(5-S.race.rival)+' wins away from the boss'}.`);
+  if(S.race.rival>=RACE){S.race.rival=0;S.bossBonus+=150;B.notes.push({name:'Rival Team Thunder',emoji:'🌩️',text:`Rival Team Thunder reached ${BOSS.name} first! They didn't win, but now ${BOSS.name} is even stronger. (+150 energy)`});}
+  bmsg(`${B.ename} won this time. Your pets cuddle you, you're all better! 🌩️ Rivals are ${S.race.rival===0?'starting over':(RACE-S.race.rival)+' wins away from the boss'}.`);
   save();renderBtns();
 }
 function endBattle(){const notes=B.notes||[];B=null;scene='world';$('battleUI').classList.add('hidden');$('hud').classList.remove('hidden');hudDirty=true;notes.forEach(n=>say(n));}
@@ -926,17 +1032,20 @@ function battleUpdate(dt){B.eShake=Math.max(0,B.eShake-dt);B.pShake=Math.max(0,B
   B.fx.forEach(f=>{f.age+=dt;if(f.k==='dot'){f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=300*dt;}if(f.k==='proj'&&f.age>=f.life&&!f.fired){f.fired=true;f.done&&f.done();}});
   B.fx=B.fx.filter(f=>f.age<f.life||(f.k==='proj'&&!f.fired));}
 function drawBattle(){
-  ctx.setTransform(DPR,0,0,DPR,0,0);RES=DPR;const L=layout(),bi=BIOME[B.biome],boss=B.opp.boss;
-  const g=ctx.createLinearGradient(0,0,0,L.bh);g.addColorStop(0,boss?'#3b1747':bi.sky[0]);g.addColorStop(1,boss?'#c2563a':bi.sky[1]);ctx.fillStyle=g;ctx.fillRect(0,0,VW,VH);
-  ctx.fillStyle=boss?'#4d3535':bi.ground;ctx.beginPath();ctx.ellipse(VW/2,L.bh*1.05,VW*.85,L.bh*.5,0,Math.PI,0);ctx.fill();
+  ctx.setTransform(DPR,0,0,DPR,0,0);RES=DPR;const L=layout(),bi=BIOME[B.biome],boss=B.boss;
+  const sky=boss?boss.sky:bi.sky;
+  const g=ctx.createLinearGradient(0,0,0,L.bh);g.addColorStop(0,sky[0]);g.addColorStop(1,sky[1]);ctx.fillStyle=g;ctx.fillRect(0,0,VW,VH);
+  ctx.fillStyle=boss?boss.ground:bi.ground;ctx.beginPath();ctx.ellipse(VW/2,L.bh*1.05,VW*.85,L.bh*.5,0,Math.PI,0);ctx.fill();
   ctx.fillStyle='rgba(0,0,0,.14)';ctx.beginPath();ctx.ellipse(L.EP.x,L.EP.y+L.s*.1,L.s*.17,L.s*.045,0,0,6.3);ctx.fill();ctx.beginPath();ctx.ellipse(L.PP.x,L.PP.y+L.s*.08,L.s*.22,L.s*.05,0,0,6.3);ctx.fill();
   // enemy
   const es=boss?L.s*.3:L.s*.2;const ex=L.EP.x+Math.sin(B.eShake*60)*B.eShake*20,ey=L.EP.y+Math.sin(time*2)*4;
-  if(boss){const gg=ctx.createRadialGradient(ex,ey,5,ex,ey,es);gg.addColorStop(0,'rgba(80,0,110,.5)');gg.addColorStop(1,'rgba(80,0,110,0)');ctx.fillStyle=gg;ctx.beginPath();ctx.arc(ex,ey,es,0,6.3);ctx.fill();}
-  if(B.ehp>0||!B.over)drawEmoji(B.over&&B.result==='win'&&boss?'🐲':B.ee,ex,ey,es,false,B.ehp<=0&&!boss?.4:1);else drawEmoji(boss?'🐲':B.ee,ex,ey,boss?es*.6:es,false,boss?1:.4);
+  if(boss){const col=B.enraged?'rgba(220,30,30,':'rgba(80,0,110,';const gg=ctx.createRadialGradient(ex,ey,5,ex,ey,es);gg.addColorStop(0,col+'.5)');gg.addColorStop(1,col+'0)');ctx.fillStyle=gg;ctx.beginPath();ctx.arc(ex,ey,es,0,6.3);ctx.fill();}
+  if(B.over&&B.result==='win'&&boss)drawEmoji(PETS[boss.reward].e,ex,ey,es*.6);
+  else drawEmoji(B.ee,ex,ey,es,false,B.over&&B.result==='win'?.4:1);
+  if(B.enraged&&!B.over)drawEmoji('😡',ex+es*.4,ey-es*.45,es*.22);
   if(B.stun)drawEmoji('💫',ex,ey-es*.6,es*.3);
-  // player + pets
-  const pl=layout();S.pets.forEach((id,i)=>{const p=petPos(i,pl),h=(B.hop[id]||0);const y=p.y-Math.sin(h*Math.PI*2)*30*(h>0?1:0)-Math.abs(Math.sin(time*3+i))*3;const pd=PETS[id];const sz=L.s*.1;
+  // player + team
+  B.team.forEach((id,i)=>{const p=petPos(i,L),h=(B.hop[id]||0);const y=p.y-Math.sin(h*Math.PI*2)*30*(h>0?1:0)-Math.abs(Math.sin(time*3+i))*3;const pd=PETS[id];const sz=L.s*.1;
     if(pd.bubble){ctx.fillStyle='rgba(160,230,255,.35)';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,y,sz*.62,0,6.3);ctx.fill();ctx.stroke();}
     drawEmoji(pd.e,p.x,y,sz,true,(B.cd[id]||0)>0?.55:1);if(pd.badge)drawEmoji(pd.badge,p.x+sz*.4,y-sz*.4,sz*.4);});
   const px=L.PP.x+Math.sin(B.pShake*60)*B.pShake*20,py=L.PP.y+Math.sin(time*2.4)*3;
@@ -953,8 +1062,8 @@ function drawBattle(){
     ctx.fillStyle='#3a2a4d';ctx.font='800 15px "Baloo 2",sans-serif';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(`${em} ${name}`,x+10,y+15);ctx.textAlign='right';ctx.fillText(`${hp}/${max}`,x+w-10,y+15);
     ctx.fillStyle='#e6dcf5';roundRect(x+10,y+28,w-20,14,7);ctx.fill();const f=Math.max(0,hp/max);if(f>0){ctx.fillStyle=f>.5?col:f>.25?'#ffc53d':'#ff5e57';roundRect(x+10,y+28,Math.max(14,(w-20)*f),14,7);ctx.fill();}};
   const bw=Math.min(300,VW*.44);
-  bar(12,12+(window.visualViewport?0:0),bw,S.name+(B.rescued?' 💖':''),S.char,B.hp,B.max,'#2fbf71');
-  bar(VW-bw-12,12,bw,B.ename,B.ee,B.ehp,B.emax,'#ff5fa2');
+  bar(12,12,bw,S.name+(B.rescued?' 💖':''),S.char,B.hp,B.max,'#2fbf71');
+  bar(VW-bw-12,12,bw,B.ename+(B.enraged?' 😡':''),B.ee,B.ehp,B.emax,'#ff5fa2');
 }
 
 // ================= main draw/loop =================
@@ -984,19 +1093,20 @@ function begin(fresh){
   P.x=S.px;P.y=S.py;P.mode='walk';P.boat=null;
   if(S.mode==='boat'&&S.boatIdx>=0&&BOATS[S.boatIdx]){P.mode='boat';P.boat=BOATS[S.boatIdx];P.x=P.boat.x;P.y=P.boat.y;}
   else if(!isLandWalk(P.x,P.y)){P.x=ISLANDS[0].cx;P.y=ISLANDS[0].cy;}
+  S.read=S.read||{};if(!S.team||!S.team.length)S.team=S.pets.slice(0,4);refreshBoss();
   pets=[];syncPets();resetTrail();
   $('title').classList.add('hidden');$('hud').classList.remove('hidden');scene='world';hudDirty=true;lastIsland=-2;
   unlockAudio();
   if(!S.intro){S.intro=true;
     say({name:'Grandma Rosie',emoji:'👵',text:`Hello ${S.name}! Welcome to Pet Islands! 🌴 This is Home Island.`});
-    say({name:'Grandma Rosie',emoji:'👵',text:'Here is Buddy the dog 🐶. He is your very first pet! He will follow you everywhere and never, ever hurt you.'});
+    say({name:'Grandma Rosie',emoji:'👵',text:'Here is Buddy the dog 🐶. He is your very first pet! Other animals won\'t join you so easily. Bring them gifts and win battles. Check the backpack 🎒 to see what each one needs!'});
     say({name:'Grandma Rosie',emoji:'👵',text:isTouch()?'Tap anywhere to walk there, or steer with the circle. Tap a person to talk to them. The big yellow button uses things, and the blue 🕊️ button makes you FLY!':'Walk with WASD or the arrow keys. Press E to talk and use things. Press F to FLY!'});
     say({name:'Grandma Rosie',emoji:'👵',text:'Find boats ⛵ on the beach to sail to other islands. Make new animal friends, read books in museums, and pick yummy veggies!'});
-    say({name:'Grandma Rosie',emoji:'👵',text:'People with ⚔️ want to battle, only if you want to. Win 5 battles to face the Shadow Dragon! Press ❓ anytime for help. Have fun! 💕'});
+    say({name:'Grandma Rosie',emoji:'👵',text:'People with ⚔️ want to battle, only if you want to. Win 7 battles to wake the first boss. The bosses are VERY hard! Press ❓ anytime for help. Have fun! 💕'});
   }
   save();
 }
-window.__pi={get P(){return P},get S(){return S},get B(){return B},get act(){return nearAct},get scene(){return scene},get dest(){return dest},NPCS,keys,step(n=1,dt=1/60){for(let i=0;i<n;i++){time+=dt;update(dt);}draw();},doAct,toggleFly,startBattle,BOATS,ISLANDS};
+window.__pi={get P(){return P},get S(){return S},get B(){return B},get act(){return nearAct},get scene(){return scene},get dest(){return dest},NPCS,ANIMALS,PLANTS,BUILDINGS,BOSSES,terr,solid,isl,MW,MH,T,keys,step(n=1,dt=1/60){for(let i=0;i<n;i++){time+=dt;update(dt);}draw();},doAct,toggleFly,startBattle,BOATS,ISLANDS};
 $('startBtn').onclick=()=>begin(true);
 $('contBtn').onclick=()=>begin(false);
 })();
