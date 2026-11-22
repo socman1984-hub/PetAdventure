@@ -270,12 +270,13 @@ const PETS={
   // --- boss friends
   dragon:{e:'🐲',short:'Ember',name:'Ember the Baby Dragon',power:'Star Breath',desc:'A huge blast of star fire!',world:'Was the Shadow Dragon. Now a happy friend.'},
   octopus:{e:'🐙',short:'Inky',name:'Inky the Octopus',power:'Ink Splash',desc:'A big splash that also stuns the other side.',world:'Was the Frost Kraken. Now a cuddly friend.'},
+  humpback:{e:'🐋',short:'Melody',name:'Melody the Humpback',power:'Whale Song',pw:{hit:[50,60],heal:20,fx:'🎵'},world:'Was in King Chomp\'s trench. Now sings you to sleep.'},
   rex:{e:'🦖',short:'Rexy',name:'Rexy the Dino',power:'Dino Stomp',desc:'The strongest power of all!',world:'Was Mega Rex. Now a silly baby dino.'},
 };
 function describePower(w){const p=[];if(w.hit)p.push((w.hits>1?`${w.hits} quick hits`:'A strong hit')+(w.crit?' that can be a DOUBLE hit':''));if(w.heal)p.push(`heals ${w.heal} energy`);if(w.shield)p.push(`a shield that blocks ${w.shield} attack${w.shield>1?'s':''}`);if(w.dodge)p.push('makes you dodge the next attack');if(w.weak)p.push('makes the next attack on you weaker');if(w.stun)p.push(`${w.stun>=.6?'often':'sometimes'} stuns the other side`);const s=p.join(', ');return s.charAt(0).toUpperCase()+s.slice(1)+'.';}
 Object.values(PETS).forEach(p=>{if(p.pw&&!p.desc)p.desc=describePower(p.pw);});
 const PET_ORDER=Object.keys(PETS);
-const BOSS_PET_HINT={dragon:'Beat the Shadow Dragon to meet this friend.',octopus:'Beat the Frost Kraken to meet this friend.',rex:'Beat Mega Rex to meet this friend.'};
+const BOSS_PET_HINT={dragon:'Beat the Shadow Dragon to meet this friend.',octopus:'Beat the Frost Kraken to meet this friend.',rex:'Beat Mega Rex to meet this friend.',humpback:'Beat King Chomp in the Deep Trench (under the sea) to meet this friend.'};
 
 // Bosses wake one at a time, in this order, each time you win the Boss Race.
 const BOSSES=[
@@ -582,6 +583,17 @@ const SEA_LIFE=[],CHESTS=[];
    for(let m=0;m<school;m++){const ox=m?(srng()-.5)*60:0,oy=m?(srng()-.5)*40:0;SEA_LIFE.push({sp,x:x+ox,y:y+oy,hx:x+ox,hy:y+oy,r:rad,ph:ph+m*.12,v,face:1});}made++;}
  for(let k=0,t=0;k<60&&t<5000;t++){const tx=2+Math.floor(srng()*(MW-4)),ty=2+Math.floor(srng()*(MH-4));if(terr[ty*MW+tx]!==0)continue;CHESTS.push({id:k,x:(tx+.5)*T,y:(ty+.5)*T});k++;}}
 
+// the underwater boss lives in its own Deep Trench, separate from the Boss Race
+const SEA_BOSS={name:'King Chomp',e:'🦈',sea:true,hp:550,atk:[13,19],
+  moves:[{n:'Mega Bite',e:'💥'},{n:'Fin Slap',e:'🌊'},{n:'Bubble Blast',e:'💧'},{n:'Shark Spin',e:'🌀'}],
+  special:{n:'Tidal Wave',e:'🌊',every:3,dmg:[15,20],double:true},reward:'humpback',
+  sky:['#03142a','#0f4f7a'],ground:'#0a3550',need:{wins:5,seabook:8},
+  winText:'King Chomp spins around and around... then smiles a BIG toothy smile. "Okay, okay, you win! You\'re the best swimmer in the sea!" A baby humpback whale swims out from behind him.'};
+{let best=-1;for(let y=60;y<MH-60;y+=3)for(let x=60;x<MW-60;x+=3){if(terr[y*MW+x]!==0)continue;let m=1e9;for(const I of ISLANDS){const d=Math.hypot(x-I.x,y-I.y)-I.r*1.75;if(d<m)m=d;}if(m>best){best=m;SEA_BOSS.tx=x;SEA_BOSS.ty=y;}}
+ SEA_BOSS.x=(SEA_BOSS.tx+.5)*T;SEA_BOSS.y=(SEA_BOSS.ty+.5)*T;SEA_BOSS.R=clamp(Math.floor(best-2),5,10);}
+const inTrench=(tx,ty)=>Math.hypot(tx-SEA_BOSS.tx,ty-SEA_BOSS.ty)<SEA_BOSS.R;
+for(let k=CHESTS.length-1;k>=0;k--){const c=CHESTS[k];if(inTrench(Math.floor(c.x/T),Math.floor(c.y/T)))CHESTS.splice(k,1);}
+
 // minimap image
 const mm=document.createElement('canvas');mm.width=MW;mm.height=MH;
 {const g=mm.getContext('2d'),img=g.createImageData(MW,MH);const hex=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
@@ -590,7 +602,7 @@ const mm=document.createElement('canvas');mm.width=MW;mm.height=MH;
 
 // ================= state =================
 const SAVE_KEY='petIslandsSave_v2';
-function defaultState(){return{name:'Addison',char:'👧',pets:['dog'],inv:{},wins:0,losses:0,race:{you:0,rival:0},bossAwake:false,bossBonus:0,bossBeaten:0,maxE:100,px:ISLANDS[0].cx,py:ISLANDS[0].cy,boats:null,talked:{},seen:{},read:{},team:['dog'],gems:0,chests:{},book:{},mapv:3,intro:false};}
+function defaultState(){return{name:'Addison',char:'👧',pets:['dog'],inv:{},wins:0,losses:0,race:{you:0,rival:0},bossAwake:false,bossBonus:0,bossBeaten:0,maxE:100,px:ISLANDS[0].cx,py:ISLANDS[0].cy,boats:null,talked:{},seen:{},read:{},team:['dog'],gems:0,chests:{},book:{},seaBossBeaten:0,mapv:3,intro:false};}
 function refreshBoss(){BOSS=BOSSES[(S.bossBeaten||0)%BOSSES.length];}
 let S=defaultState();
 function save(){try{S.px=P.x;S.py=P.y;if(P.mode!=='walk'&&scene==='world'){/* save on land spot near if flying/boat */}S.boats=BOATS.map(b=>[Math.round(b.x),Math.round(b.y)]);const bt=P.boat||P.diveBoat;S.mode=(P.mode==='boat'||P.mode==='swim')?'boat':P.mode;S.boatIdx=bt?BOATS.indexOf(bt):-1;localStorage.setItem(SAVE_KEY,JSON.stringify(S));}catch(e){}}
@@ -671,6 +683,7 @@ function doAct(a){
     case 'exit':exitMuseum();break;
     case 'chest':openChest(a.o);break;
     case 'creature':lookCreature(a.o);break;
+    case 'seaboss':meetSeaBoss();break;
   }
 }
 function pickPlant(p){if(!p.ripe)return;p.ripe=false;p.t=25;S.inv[p.type]=(S.inv[p.type]||0)+1;SFX.pick();toast(`${CROPS[p.type].e} +1 ${CROPS[p.type].n}!`,1500);hudDirty=true;}
@@ -687,6 +700,7 @@ function needStatus(need){const parts=[];let ok=true;
   if(need.items)for(const k in need.items){const have=S.inv[k]||0,n=need.items[k];if(have<n)ok=false;parts.push(`${have>=n?'✅':'⬜'} ${CROPS[k].e} ${Math.min(have,n)}/${n} ${CROPS[k].n.toLowerCase()}`);}
   if(need.gems){const g=S.gems||0;if(g<need.gems)ok=false;parts.push(`${g>=need.gems?'✅':'⬜'} 💎 ${Math.min(g,need.gems)}/${need.gems} sea gems`);}
   if(need.wins){if(S.wins<need.wins)ok=false;parts.push(`${S.wins>=need.wins?'✅':'⬜'} ⚔️ ${Math.min(S.wins,need.wins)}/${need.wins} battles won`);}
+  if(need.seabook){const r=Object.keys(S.book||{}).length;if(r<need.seabook)ok=false;parts.push(`${r>=need.seabook?'✅':'⬜'} 📘 ${Math.min(r,need.seabook)}/${need.seabook} sea creatures in your Sea Book`);}
   if(need.books){const r=Object.keys(S.read||{}).length;if(r<need.books)ok=false;parts.push(`${r>=need.books?'✅':'⬜'} 📖 ${Math.min(r,need.books)}/${need.books} books read`);}
   return{ok,text:parts.join(' · ')};}
 function meetAnimal(a){
@@ -793,7 +807,7 @@ function tappedThing(w){
   const near=(x,y,r)=>dist(x,y,w.x,w.y)<r;
   if(scene==='museum'){for(const e of MUSEUMS[curMuseum].exhibits)if(near((e.tx+.5)*T,(e.ty+.5)*T-8,30))return{o:e,x:(e.tx+.5)*T,y:(e.ty+.5)*T};
     if(near(RW/2*T,(RH-1)*T,36))return{type:'exit',x:RW/2*T,y:(RH-1.5)*T};return null;}
-  if(scene==='sea'){for(const a of ANIMALS)if(a.sea&&!hasPet(a.pet)&&near(a.x,a.y-6,34))return{o:a,x:a.x,y:a.y};
+  if(scene==='sea'){if(near(SEA_BOSS.x,SEA_BOSS.y-30,70))return{type:'seaboss',x:SEA_BOSS.x,y:SEA_BOSS.y};for(const a of ANIMALS)if(a.sea&&!hasPet(a.pet)&&near(a.x,a.y-6,34))return{o:a,x:a.x,y:a.y};
     for(const c of CHESTS)if(!S.chests[c.id]&&near(c.x,c.y,30))return{o:c,x:c.x,y:c.y};
     for(const c of SEA_LIFE)if(near(c.x,c.y,c.sp.big?50:26))return{o:c,x:c.x,y:c.y};return null;}
   if(P.mode!=='walk')return null;
@@ -822,7 +836,7 @@ cv.addEventListener('pointermove',e=>{if(dest&&dest.hold&&dest.id===e.pointerId)
 const relDest=e=>{if(dest&&dest.id===e.pointerId)dest.hold=false;};
 cv.addEventListener('pointerup',relDest);cv.addEventListener('pointercancel',relDest);
 function unlockAudio(){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();}catch(e){}}
-const ACT_BTN={chest:['💎','Open'],creature:['👀','Look'],npc:['💬','Talk'],animal:['❤️','Meet'],boat:['⛵','Sail'],land:['🏝️','Hop off'],plant:['🧺','Pick'],museum:['🚪','Go in'],house:['😴','Nap'],boss:['⚔️','Fight'],exhibit:['👀','Look'],exit:['🚪','Exit']};
+const ACT_BTN={seaboss:['⚔️','Fight'],chest:['💎','Open'],creature:['👀','Look'],npc:['💬','Talk'],animal:['❤️','Meet'],boat:['⛵','Sail'],land:['🏝️','Hop off'],plant:['🧺','Pick'],museum:['🚪','Go in'],house:['😴','Nap'],boss:['⚔️','Fight'],exhibit:['👀','Look'],exit:['🚪','Exit']};
 let lastBtnKey='';
 function updateTouchBtns(){const a=nearAct&&ACT_BTN[nearAct.type];const fl=P.mode==='fly';const key=(a?nearAct.type:'none')+fl+scene+P.mode;if(key===lastBtnKey)return;lastBtnKey=key;
   const idle=scene==='sea'?['⬆️','Up']:P.mode==='boat'?['🌊','Dive']:null;
@@ -847,6 +861,7 @@ function openBag(){
   const team=teamPets();
   let h='<h2>🎒 Backpack</h2>';
   h+=`<h3>⭐ Boss Race</h3><div>You: <b>${S.race.you}/${RACE}</b> wins &nbsp; | &nbsp; Rival Team Thunder: <b>${S.race.rival}/${RACE}</b>. ${S.bossAwake?`${BOSS.e} <b>${BOSS.name} is awake on ${ISLANDS[BOSS.island].name}!</b>`:`Win ${RACE} battles to wake the next boss: ${BOSS.name} ${BOSS.e}`}</div>`;
+  {const st=needStatus(SEA_BOSS.need);h+=`<div style="margin-top:4px">🦈 <b>Sea Boss: King Chomp</b> sleeps in the Deep Trench under the sea${S.seaBossBeaten?` (beaten ${S.seaBossBeaten}×)`:''}. ${st.ok?'<b>He is awake! Dive down and battle him!</b>':'To wake him: '+st.text}</div>`;}
   h+=`<div style="margin-top:4px">Battles won: <b>${S.wins}</b> · lost: <b>${S.losses}</b> · Max energy: <b>${S.maxE}</b> · Books read: <b>${Object.keys(S.read||{}).length}</b> · Sea gems: <b>${S.gems||0}</b> 💎 · Sea Book: <b>${Object.keys(S.book||{}).length}/${SEA_SPECIES.length}</b>${S.bossBeaten?` · Bosses beaten: <b>${S.bossBeaten}</b> 🏆`:''}</div>`;
   h+=`<h3>⚔️ Battle Team (${team.length}/${TEAM_MAX})</h3><div style="font-size:14px">Only your team fights in battles. Tap a pet's button below to add it or take it out.</div>`;
   h+=`<h3>🐾 Pets (${S.pets.length}/${PET_ORDER.length})</h3>`;
@@ -865,7 +880,7 @@ function openBag(){
   $('resetBtn').onclick=()=>{const b=$('resetBtn');if(b.dataset.sure){try{localStorage.removeItem(SAVE_KEY);}catch(e){}location.reload();}else{b.dataset.sure=1;b.textContent='Tap again to really erase everything';b.style.background='var(--bad)';b.style.color='#fff';}};
 }
 function openMap(){
-  openOverlay('<h2>🗺️ Map of Pet Islands</h2><canvas id="mapCanvas" width="1020" height="986"></canvas><div style="margin-top:6px;font-size:14px">💗 = you · ⛵ = boats · ❓ = animals to find · 💧 = sea animals (dive to find them) · 🐉 = boss (when awake)</div>');
+  openOverlay('<h2>🗺️ Map of Pet Islands</h2><canvas id="mapCanvas" width="1020" height="986"></canvas><div style="margin-top:6px;font-size:14px">💗 = you · ⛵ = boats · ❓ = animals to find · 💧 = sea animals (dive to find them) · 🦈 = sea boss (dive to find him) · 🐉 = boss (when awake)</div>');
   const c=$('mapCanvas'),g=c.getContext('2d'),s=1.7;g.imageSmoothingEnabled=false;g.drawImage(mm,0,0,MW*s,MH*s);
   g.textAlign='center';g.textBaseline='middle';
   const em=(e,x,y,sz)=>{g.font=`${sz}px ${EMOJI_FONT}`;g.fillText(e,x,y);};
@@ -874,6 +889,7 @@ function openMap(){
   BUILDINGS.forEach(b=>{if(b.k==='museum')em('🏛️',b.x/T*s,b.y/T*s,30);if(b.k==='house')em('🏠',b.x/T*s,b.y/T*s,26);if(b.k==='volcano')em('🌋',b.x/T*s,b.y/T*s,36);});
   if(S.bossAwake&&BOSS)em(BOSS.e,BOSS.x/T*s,BOSS.y/T*s,30);
   ISLANDS.forEach(I=>{g.font='800 15px "Baloo 2",sans-serif';g.lineWidth=4;g.strokeStyle='rgba(40,25,60,.85)';const y=(I.y-I.r-1.2)*s;g.strokeText(I.name,I.x*s,y);g.fillStyle='#fff';g.fillText(I.name,I.x*s,y);});
+  em('🦈',SEA_BOSS.x/T*s,SEA_BOSS.y/T*s,26);g.font='800 13px "Baloo 2",sans-serif';g.strokeText('Deep Trench',SEA_BOSS.x/T*s,SEA_BOSS.y/T*s+22);g.fillText('Deep Trench',SEA_BOSS.x/T*s,SEA_BOSS.y/T*s+22);
   em('💗',P.x/T*s,P.y/T*s,30);
 }
 function openHelp(){
@@ -986,6 +1002,7 @@ function drawWorld(){
     if(d===1){if(bi.tree==='rock'){ctx.fillStyle='#3d3232';ctx.beginPath();ctx.ellipse(cx,cy+4,13,10,0,0,6.3);ctx.fill();ctx.fillStyle='#5a4a4a';ctx.beginPath();ctx.ellipse(cx-3,cy,8,6,0,0,6.3);ctx.fill();}
       else{ctx.fillStyle='rgba(0,0,0,.15)';ctx.beginPath();ctx.ellipse(cx,cy+12,12,4,0,0,6.3);ctx.fill();drawEmoji(bi.tree,cx,cy-4,34);}}
     else if(d===2)drawEmoji(bi.flowers[dvar[i]%3],cx+(dvar[i]%7-3),cy+(dvar[i]%5-2),12);}
+  {const b=SEA_BOSS;if(b.x>camX-300&&b.x<camX+VW/z+300&&b.y>camY-300&&b.y<camY+VH/z+300){ctx.strokeStyle='rgba(10,40,70,.35)';ctx.lineWidth=6;for(let k=0;k<3;k++){ctx.beginPath();ctx.arc(b.x,b.y,40+k*45,time*(1+k*.3),time*(1+k*.3)+4.2);ctx.stroke();}drawEmoji('🌀',b.x,b.y,40,false,.8);label('Deep Trench: dive here! 🦈',b.x,b.y+170,13,'#bfe3ff');}}
   drawDest();
   // entities
   const ents=[];
@@ -1070,10 +1087,10 @@ const MOVES=[{n:'Water Balloon',e:'🎈'},{n:'Pillow Toss',e:'☁️'},{n:'Snowb
 function teamPets(){const t=(S.team||[]).filter(hasPet);return (t.length?t:S.pets).slice(0,TEAM_MAX);}
 const bossHP=()=>BOSS.hp+S.bossBonus+Math.floor(S.bossBeaten/BOSSES.length)*400;
 function startBattle(opp){
-  const boss=opp.boss?BOSS:null,lvl=opp.lvl||8;
-  const hp=boss?bossHP():80+lvl*35+Math.min(S.wins,15)*6;
+  const boss=opp.bossObj||(opp.boss?BOSS:null),lvl=opp.lvl||8;
+  const hp=boss?(boss.sea?seaBossHP():bossHP()):80+lvl*35+Math.min(S.wins,15)*6;
   const atk=boss?boss.atk.slice():[5+lvl*3,9+lvl*3];
-  B={opp,boss,lvl,ename:opp.name,ee:opp.e,ehp:hp,emax:hp,atk,hp:S.maxE,max:S.maxE,team:teamPets(),cd:{},shield:0,dodge:false,stun:0,weak:0,rescued:false,busy:false,over:false,
+  B={from:scene,opp,boss,lvl,ename:opp.name,ee:opp.e,ehp:hp,emax:hp,atk,hp:S.maxE,max:S.maxE,team:teamPets(),cd:{},shield:0,dodge:false,stun:0,weak:0,rescued:false,busy:false,over:false,
      fx:[],eShake:0,pShake:0,hop:{},turn:0,menu:null,snacks:0,healed:false,enraged:false,biome:(ISLANDS[curIsland]||ISLANDS[0]).biome,result:null};
   scene='battle';$('hud').classList.add('hidden');$('battleUI').classList.remove('hidden');
   bmsg(boss?`${boss.name} roars! This is a BOSS battle! ${boss.e}`:`${opp.name} wants a battle! Pick a move!`);renderBtns();SFX.zap();
@@ -1185,7 +1202,12 @@ function win(){
   S.wins++;S.maxE=Math.min(220,S.maxE+4);
   const rewards=[];for(let k=0;k<(B.boss?6:2);k++){const c=pick(Object.keys(CROPS));S.inv[c]=(S.inv[c]||0)+1;rewards.push(CROPS[c].e);}
   B.notes=[];
-  if(B.boss){const b=B.boss;S.bossBeaten++;S.bossAwake=false;S.race={you:0,rival:0};S.bossBonus=0;
+  if(B.boss&&B.boss.sea){const b=B.boss;S.seaBossBeaten++;const g=10;S.gems=(S.gems||0)+g;
+    B.notes.push({name:b.name,emoji:b.e,text:b.winText});
+    if(!hasPet(b.reward)){addPet(b.reward);const pd=PETS[b.reward];B.notes.push({name:pd.name,emoji:pd.e,text:`${pd.name} joined your team! Power: ${pd.power}. ${pd.desc}`});}
+    B.notes.push({name:'Ocean Champion!',emoji:'🏆',text:`${S.name}, you beat King Chomp! You got ${g} sea gems 💎. He wants a rematch, and he'll be even stronger next time (${seaBossHP()} energy)!`});
+    bmsg(`🏆 YOU BEAT KING CHOMP! You got ${rewards.join(' ')} and ${g} 💎!`);
+  }else if(B.boss){const b=B.boss;S.bossBeaten++;S.bossAwake=false;S.race={you:0,rival:0};S.bossBonus=0;
     B.notes.push({name:b.name,emoji:b.e,text:b.winText});
     if(!hasPet(b.reward)){addPet(b.reward);const pd=PETS[b.reward];B.notes.push({name:pd.name,emoji:pd.e,text:`${pd.name} joined your team! Power: ${pd.power}. ${pd.desc}`});}
     refreshBoss();
@@ -1208,7 +1230,7 @@ function lose(){
   bmsg(`${B.ename} won this time. Your pets cuddle you, you're all better! 🌩️ Rivals are ${S.race.rival===0?'starting over':(RACE-S.race.rival)+' wins away from the boss'}.`);
   save();renderBtns();
 }
-function endBattle(){const notes=B.notes||[];B=null;scene='world';$('battleUI').classList.add('hidden');$('hud').classList.remove('hidden');hudDirty=true;notes.forEach(n=>say(n));}
+function endBattle(){const notes=B.notes||[];const from=B.from;B=null;scene=from==='sea'?'sea':'world';$('battleUI').classList.add('hidden');$('hud').classList.remove('hidden');hudDirty=true;notes.forEach(n=>say(n));}
 function battleUpdate(dt){B.eShake=Math.max(0,B.eShake-dt);B.pShake=Math.max(0,B.pShake-dt);for(const k in B.hop)B.hop[k]=Math.max(0,B.hop[k]-dt);
   B.fx.forEach(f=>{f.age+=dt;if(f.k==='dot'){f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=300*dt;}if(f.k==='proj'&&f.age>=f.life&&!f.fired){f.fired=true;f.done&&f.done();}});
   B.fx=B.fx.filter(f=>f.age<f.life||(f.k==='proj'&&!f.fired));}
@@ -1262,8 +1284,16 @@ function surface(){
 }
 function findSeaAct(take){
   ANIMALS.forEach(a=>{if(!a.sea||hasPet(a.pet))return;const d=dist(a.x,a.y,P.x,P.y);if(d<62)take(d-12,{type:'animal',o:a,x:a.x,y:a.y-20,label:'Meet '+PETS[a.pet].short});});
+  {const d=dist(SEA_BOSS.x,SEA_BOSS.y,P.x,P.y);if(d<110)take(d-60,{type:'seaboss',x:SEA_BOSS.x,y:SEA_BOSS.y-70,label:needStatus(SEA_BOSS.need).ok?'Face King Chomp!':'King Chomp is sleeping 💤'});}
   CHESTS.forEach(c=>{if(S.chests[c.id])return;const d=dist(c.x,c.y,P.x,P.y);if(d<52)take(d-6,{type:'chest',o:c,x:c.x,y:c.y-22,label:'Open the treasure chest'});});
   for(const c of SEA_LIFE){if(!c.vis)continue;const d=dist(c.x,c.y,P.x,P.y),r=c.sp.big?80:52;if(d<r)take(d+8,{type:'creature',o:c,x:c.x,y:c.y-(c.sp.big?40:18),label:(S.book[c.sp.n]?'Look at the ':'✨ New! ')+c.sp.n});}
+}
+const seaBossHP=()=>SEA_BOSS.hp+S.seaBossBeaten*200;
+function meetSeaBoss(){
+  const st=needStatus(SEA_BOSS.need);
+  if(!st.ok){say({name:'King Chomp',emoji:'🦈',text:`Zzz... King Chomp the Mega Shark is sleeping in the Deep Trench. Only a brave AND curious explorer can wake him. You need: ${st.text}`});return;}
+  say({name:'King Chomp',emoji:'🦈',text:`CHOMP CHOMP! Who's swimming in MY trench?! (Sea boss: ${seaBossHP()} energy. His Tidal Wave hits twice! Bring your best team and snacks.)`,
+    choices:[{label:'⚔️ Battle King Chomp!',fn:()=>startBattle({name:'King Chomp',e:'🦈',bossObj:SEA_BOSS})},{label:'Swim away',fn:()=>{}}]});
 }
 function openChest(c){if(S.chests[c.id])return;S.chests[c.id]=1;const g=ri(1,3);S.gems=(S.gems||0)+g;const crop=pick(Object.keys(CROPS));S.inv[crop]=(S.inv[crop]||0)+1;
   SFX.unlock();hudDirty=true;save();const left=CHESTS.length-Object.keys(S.chests).length;
@@ -1276,22 +1306,32 @@ function drawChest(x,y,open){ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx
   if(open){ctx.fillStyle='#5e3c1a';roundRect(x-14,y-16,28,9,3);ctx.fill();}
   else{ctx.fillStyle='#a06a32';roundRect(x-14,y-12,28,8,4);ctx.fill();ctx.fillStyle='#ffd93d';ctx.beginPath();ctx.arc(x,y-1,2.5,0,6.3);ctx.fill();
     const tw=(Math.sin(time*3+x)+1)/2;ctx.fillStyle=`rgba(255,240,150,${tw*.8})`;ctx.beginPath();ctx.arc(x+10,y-14,2+tw*2,0,6.3);ctx.fill();}}
+function drawSeaBoss(){const b=SEA_BOSS,awake=needStatus(b.need).ok,R=b.R*T;
+  // glowing lanterns around the rim of the trench
+  for(let k=0;k<10;k++){const a=k/10*6.283,x=b.x+Math.cos(a)*R*.9,y=b.y+Math.sin(a)*R*.9,g=(Math.sin(time*2+k)+1)/2;ctx.fillStyle=`rgba(120,255,230,${.25+g*.35})`;ctx.beginPath();ctx.arc(x,y,4+g*3,0,6.3);ctx.fill();}
+  const sx=b.x+Math.cos(time*.5)*R*.25,sy=b.y+Math.sin(time*.7)*R*.15;b.dx=sx;b.dy=sy;
+  const gl=ctx.createRadialGradient(sx,sy,10,sx,sy,110);gl.addColorStop(0,awake?'rgba(255,60,60,.35)':'rgba(80,140,255,.25)');gl.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=gl;ctx.beginPath();ctx.arc(sx,sy,110,0,6.3);ctx.fill();
+  drawEmoji('🦈',sx,sy+Math.sin(time*2)*4,awake?120:100,Math.cos(time*.5)<0,awake?1:.85);drawEmoji('👑',sx-6,sy-58+Math.sin(time*2)*4,28);
+  if(!awake)drawEmoji('💤',sx+50,sy-50+Math.sin(time*2)*5,26);
+  label('King Chomp',sx,sy+62,13,awake?'#ff9ad5':'#bfe3ff');label('Deep Trench',b.x,b.y+R-10,11,'#7fffe0');}
 function drawSea(){
   const z=ZOOM;let camX=clamp(P.x-VW/2/z,0,MW*T-VW/z),camY=clamp(P.y-VH/2/z,0,MH*T-VH/z);
   ctx.setTransform(DPR,0,0,DPR,0,0);const bg=ctx.createLinearGradient(0,0,0,VH);bg.addColorStop(0,'#13679b');bg.addColorStop(1,'#062a47');ctx.fillStyle=bg;ctx.fillRect(0,0,VW,VH);
   ctx.setTransform(DPR*z,0,0,DPR*z,-camX*DPR*z,-camY*DPR*z);RES=DPR*z;CAM={x:camX,y:camY,z};
   const x0=Math.max(0,Math.floor(camX/T)),x1=Math.min(MW-1,Math.ceil((camX+VW/z)/T)),y0=Math.max(0,Math.floor(camY/T)),y1=Math.min(MH-1,Math.ceil((camY+VH/z)/T));
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=y*MW+x,t=terr[i],h=dvar[i];let col;
-    if(t===0)col=(h&1)?'#0f5280':'#0e4c78';else if(t===1)col=(h&1)?'#2a83ab':'#287da4';else{col='#11303f';if(y+1<MH&&terr[i+MW]<=1)col='#1b4a5e';}
+    if(t===0&&inTrench(x,y)){const d=Math.hypot(x-SEA_BOSS.tx,y-SEA_BOSS.ty)/SEA_BOSS.R;col=d<.75?((h&1)?'#051d33':'#04192d'):((h&1)?'#0a3858':'#093454');}
+    else if(t===0)col=(h&1)?'#0f5280':'#0e4c78';else if(t===1)col=(h&1)?'#2a83ab':'#287da4';else{col='#11303f';if(y+1<MH&&terr[i+MW]<=1)col='#1b4a5e';}
     ctx.fillStyle=col;ctx.fillRect(x*T,y*T,T+.6,T+.6);}
   // sea floor decorations
-  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=y*MW+x,t=terr[i],h=dvar[i];if(t>1)continue;const cx=x*T+16,cy=y*T+16;
+  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=y*MW+x,t=terr[i],h=dvar[i];if(t>1||inTrench(x,y))continue;const cx=x*T+16,cy=y*T+16;
     if(h%11===0){ctx.strokeStyle=t===1?'#3fbf6a':'#2f9a58';ctx.lineWidth=3;ctx.lineCap='round';for(let k=-1;k<=1;k++){const sw=Math.sin(time*1.6+x+k)*6;ctx.beginPath();ctx.moveTo(cx+k*6,cy+14);ctx.quadraticCurveTo(cx+k*6+sw,cy,cx+k*6+sw*1.6,cy-16-(h%5)*2);ctx.stroke();}}
     else if(h%13===1&&t===1){const cols=['#ff7aa8','#ff9f43','#b28dff','#ff5e57'];ctx.fillStyle=cols[h%4];for(let k=0;k<5;k++){ctx.beginPath();ctx.arc(cx-8+k*4,cy+6-Math.abs(k-2)*5-(k%2)*6,4.5,0,6.3);ctx.fill();}}
     else if(h%17===2){ctx.fillStyle='#3b5966';ctx.beginPath();ctx.ellipse(cx,cy+8,12,7,0,0,6.3);ctx.fill();ctx.fillStyle='#4f707e';ctx.beginPath();ctx.ellipse(cx-3,cy+5,6,3,0,0,6.3);ctx.fill();}
     else if(h%7===3){ctx.fillStyle='rgba(255,240,200,.18)';ctx.fillRect(cx-6,cy+4,12,2);}}
   CHESTS.forEach(c=>{if(c.x<camX-40||c.x>camX+VW/z+40||c.y<camY-40||c.y>camY+VH/z+40)return;drawChest(c.x,c.y,!!S.chests[c.id]);});
   const ents=[];const vx0=camX-160,vx1=camX+VW/z+160,vy0=camY-160,vy1=camY+VH/z+160;
+  if(SEA_BOSS.x>vx0-200&&SEA_BOSS.x<vx1+200&&SEA_BOSS.y>vy0-200&&SEA_BOSS.y<vy1+200)ents.push({y:SEA_BOSS.y,f:drawSeaBoss});
   for(const c of SEA_LIFE){c.vis=false;if(c.hx+c.r<vx0||c.hx-c.r>vx1||c.hy+c.r<vy0||c.hy-c.r>vy1)continue;c.vis=true;
     if(!c.sp.still){const ph=c.ph+time*c.v*(c.sp.big?.25:.6);c.x=c.hx+Math.cos(ph)*c.r;c.y=c.hy+Math.sin(ph)*c.r*.6;c.face=(-Math.sin(ph)*c.v)>0?1:-1;}
     const sz=c.sp.big?72:c.sp.still?15:c.sp.crawl?20:24;ents.push({y:c.y,f:()=>{const bob=c.sp.still||c.sp.crawl?0:Math.sin(time*3+c.ph)*2;drawEmoji(c.sp.e,c.x,c.y+bob,sz,c.face>0&&!c.sp.still,c.sp.big?.92:1);
@@ -1339,7 +1379,7 @@ function begin(fresh){
   P.x=S.px;P.y=S.py;P.mode='walk';P.boat=null;
   if(S.mode==='boat'&&S.boatIdx>=0&&BOATS[S.boatIdx]){P.mode='boat';P.boat=BOATS[S.boatIdx];P.x=P.boat.x;P.y=P.boat.y;}
   else if(!isLandWalk(P.x,P.y)){P.x=ISLANDS[0].cx;P.y=ISLANDS[0].cy;}
-  S.read=S.read||{};S.gems=S.gems||0;S.chests=S.chests||{};S.book=S.book||{};if(!S.team||!S.team.length)S.team=S.pets.slice(0,4);refreshBoss();
+  S.read=S.read||{};S.gems=S.gems||0;S.chests=S.chests||{};S.book=S.book||{};S.seaBossBeaten=S.seaBossBeaten||0;if(!S.team||!S.team.length)S.team=S.pets.slice(0,4);refreshBoss();
   pets=[];syncPets();resetTrail();
   $('title').classList.add('hidden');$('hud').classList.remove('hidden');scene='world';hudDirty=true;lastIsland=-2;
   unlockAudio();
@@ -1352,7 +1392,7 @@ function begin(fresh){
   }
   save();
 }
-window.__pi={get P(){return P},get S(){return S},get B(){return B},get act(){return nearAct},get scene(){return scene},get dest(){return dest},SEA_LIFE,CHESTS,NPCS,ANIMALS,PLANTS,BUILDINGS,BOSSES,terr,solid,isl,MW,MH,T,keys,step(n=1,dt=1/60){for(let i=0;i<n;i++){time+=dt;update(dt);}draw();},doAct,toggleFly,startBattle,BOATS,ISLANDS};
+window.__pi={get P(){return P},get S(){return S},get B(){return B},get act(){return nearAct},get scene(){return scene},get dest(){return dest},SEA_LIFE,CHESTS,SEA_BOSS,NPCS,ANIMALS,PLANTS,BUILDINGS,BOSSES,terr,solid,isl,MW,MH,T,keys,step(n=1,dt=1/60){for(let i=0;i<n;i++){time+=dt;update(dt);}draw();},doAct,toggleFly,startBattle,BOATS,ISLANDS};
 $('startBtn').onclick=()=>begin(true);
 $('contBtn').onclick=()=>begin(false);
 })();
