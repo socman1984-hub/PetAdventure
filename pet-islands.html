@@ -291,6 +291,26 @@ const PETS={
   lobster:{e:'🦞',sea:1,short:'Snips',name:'Snips the Lobster',power:'Claw Snap',pw:{hit:[24,30],crit:.3,fx:'🦞'},world:'Has two big claws.'},
   shark:{e:'🦈',sea:1,short:'Finn',name:'Finn the Shark',power:'Shark Fin',pw:{hit:[44,52],fx:'🦈'},world:'A friendly shark who only eats veggies!'},
   whale:{e:'🐳',sea:1,short:'Big Blue',name:'Big Blue the Whale',power:'Giant Splash',pw:{hit:[55,65],stun:.5,fx:'🌊'},world:'The biggest friend of all.'},
+  // --- more sea friends (found underwater, spread across the ocean)
+  starfish:{e:'⭐',sea:1,short:'Twinkle',name:'Twinkle the Starfish',power:'Star Heal',pw:{heal:35},world:'Can grow back a lost arm!'},
+  goldfish:{e:'🐟',badge:'✨',sea:1,bubble:true,short:'Goldie',name:'Goldie the Goldfish',power:'Golden Splash',pw:{hit:[14,18],dodge:1,fx:'💧'},world:'Shiny as treasure.'},
+  swordfish:{e:'🐟',badge:'🗡️',sea:1,bubble:true,short:'Swish',name:'Swish the Swordfish',power:'Sword Dash',pw:{hit:[32,40],crit:.25,fx:'🗡️'},world:'One of the fastest fish in the sea.'},
+  clownfish:{e:'🐠',badge:'🧡',sea:1,bubble:true,short:'Bubba',name:'Bubba the Clownfish',power:'Anemone Hide',pw:{shield:2,dodge:1},world:'Hides safely in sea anemones.'},
+  hammerhead:{e:'🦈',badge:'🔨',sea:1,short:'Hammer',name:'Hammer the Hammerhead',power:'Hammer Bonk',pw:{hit:[38,46],weak:1,fx:'🔨'},world:'Has a head shaped like a hammer!'},
+  pinkdolphin:{e:'🐬',badge:'💗',sea:1,short:'Rosie',name:'Rosie the Pink River Dolphin',power:'Pink Wave',pw:{hit:[20,26],heal:20,fx:'💗'},world:'Real river dolphins can be pink!'},
+  narwhal:{e:'🐳',badge:'🦄',sea:1,short:'Nova',name:'Nova the Narwhal',power:'Tusk Twirl',pw:{hit:[50,60],stun:.3,fx:'🌀'},world:'The unicorn of the sea.'},
+  oldturtle:{e:'🐢',badge:'👓',sea:1,short:'Grandpa Shell',name:'Grandpa Shell the Old Turtle',power:'Wise Old Shell',pw:{shield:3,heal:15},world:'Over 100 years old and very wise.'},
+  kingcrab:{e:'🦀',badge:'👑',sea:1,short:'King Pinch',name:'King Pinch the King Crab',power:'Royal Pinch',pw:{hit:[22,28],hits:2,fx:'🦀'},world:'Has super long legs.'},
+  seacroc:{e:'🐊',badge:'🌊',sea:1,short:'Salty',name:'Salty the Saltwater Croc',power:'Big Croc Splash',pw:{hit:[42,50],fx:'🌊'},world:'Swims in the sea, but loves to smile.'},
+  firesquid:{e:'🦑',badge:'💡',sea:1,short:'Glow',name:'Glow the Firefly Squid',power:'Light Show',pw:{hit:[16,20],stun:.6,fx:'💡'},world:'Glows bright blue in the dark.'},
+  nautilus:{e:'🐚',badge:'🌀',sea:1,short:'Spiral',name:'Spiral the Nautilus',power:'Spiral Spin',pw:{hit:[12,15],hits:3,fx:'🌀'},world:'Has a shell shaped like a spiral.'},
+  pistolshrimp:{e:'🦐',badge:'💥',sea:1,short:'Pop',name:'Pop the Pistol Shrimp',power:'Snap Bubble',pw:{hit:[36,44],stun:.3,fx:'💥'},world:'Snaps its claw so fast it makes a loud POP!'},
+  flyingfish:{e:'🐟',badge:'💨',sea:1,bubble:true,short:'Zoom-Zoom',name:'Zoom-Zoom the Flying Fish',power:'Jump and Glide',pw:{hit:[10,14],hits:2,dodge:1,fx:'💨'},world:'Glides above the waves!'},
+  anglerfish:{e:'🐟',badge:'💡',sea:1,bubble:true,short:'Lantern',name:'Lantern the Anglerfish',power:'Lure Light',pw:{hit:[28,34],stun:.5,fx:'💡'},world:'Has a glowing light on its head, deep in the dark sea.'},
+  orca:{e:'🐳',badge:'🖤',sea:1,short:'Domino',name:'Domino the Orca',power:'Orca Splash',pw:{hit:[55,65],weak:1,fx:'🌊'},world:'A black and white ocean champion.'},
+  whaleshark:{e:'🦈',badge:'⚪',sea:1,short:'Gentle',name:'Gentle the Whale Shark',power:'Giant Gulp',pw:{hit:[45,55],heal:25,fx:'🌊'},world:'The biggest fish in the world, and very gentle.'},
+  seabunny:{e:'🐰',badge:'🌊',sea:1,bubble:true,short:'Fluff',name:'Fluff the Sea Bunny',power:'Fluffy Cuddle',pw:{heal:30,dodge:1},world:'A real tiny sea slug that looks like a bunny!'},
+  parrotfish:{e:'🐠',badge:'🌈',sea:1,bubble:true,short:'Rainbow',name:'Rainbow the Parrotfish',power:'Rainbow Crunch',pw:{hit:[24,30],heal:10,fx:'🌈'},world:'Munches coral and makes sand!'},
   // --- boss friends
   dragon:{e:'🐲',short:'Ember',name:'Ember the Baby Dragon',power:'Star Breath',desc:'A huge blast of star fire!',world:'Was the Shadow Dragon. Now a happy friend.'},
   octopus:{e:'🐙',short:'Inky',name:'Inky the Octopus',power:'Ink Splash',desc:'A big splash that also stuns the other side.',world:'Was the Frost Kraken. Now a cuddly friend.'},
@@ -747,6 +767,35 @@ for(let t=0;t<60000&&WRECKS.length<RELICS.length;t++){const tx=8+Math.floor(srng
   let ok=true;for(let y=-3;y<=3&&ok;y++)for(let x=-4;x<=4;x++)if(terr[(ty+y)*MW+tx+x]!==0){ok=false;break;}if(!ok)continue;
   if(WRECKS.some(w=>Math.hypot(w.tx-tx,w.ty-ty)<70))continue;if(SEA_BOSSES.some(b=>Math.hypot(tx-b.tx,ty-b.ty)<b.R+15))continue;
   const i=WRECKS.length;WRECKS.push({id:i,tx,ty,x:(tx+.5)*T,y:(ty+.5)*T,name:WRECK_NAMES[i],relic:RELICS[i],tilt:(srng()-.5)*.5});}
+const MORE_SEA=[
+ {pet:'starfish',need:{gems:4},say:'Twinkle waves one of her five arms.'},
+ {pet:'goldfish',need:{gems:5},say:'Goldie sparkles in the light.'},
+ {pet:'clownfish',need:{gems:6,seabook:3},say:'Bubba peeks out of his anemone.'},
+ {pet:'seabunny',need:{gems:6},say:'Fluff wiggles her fluffy little ears.'},
+ {pet:'flyingfish',need:{gems:7,wins:2},say:'Zoom-Zoom jumps right over you!'},
+ {pet:'nautilus',need:{gems:8,seabook:5},say:'Spiral bobs up and down in her shell.'},
+ {pet:'parrotfish',need:{gems:9,wins:3},say:'Rainbow crunches some coral. Crunch crunch!'},
+ {pet:'pinkdolphin',need:{gems:10,wins:3},say:'Rosie does a happy pink flip.'},
+ {pet:'oldturtle',need:{gems:10,seabook:8},say:'Grandpa Shell yawns. "Back in my day..."'},
+ {pet:'firesquid',need:{gems:12,seabook:9},say:'Glow lights up in sparkly blue.'},
+ {pet:'kingcrab',need:{gems:12,wins:5},say:'King Pinch clicks his claws royally.'},
+ {pet:'swordfish',need:{gems:14,wins:6},say:'Swish zooms past like a rocket.'},
+ {pet:'anglerfish',need:{gems:15,seabook:10},say:'Lantern\'s little light glows in the dark.'},
+ {pet:'pistolshrimp',need:{gems:16,wins:7},say:'Pop snaps his claw: POP!'},
+ {pet:'hammerhead',need:{gems:18,wins:8},say:'Hammer nods his funny hammer head.'},
+ {pet:'seacroc',need:{gems:20,wins:9},say:'Salty smiles a big toothy grin.'},
+ {pet:'whaleshark',need:{gems:22,seabosses:2},say:'Gentle slowly swims around you. So big!'},
+ {pet:'narwhal',need:{gems:25,seabosses:3},say:'Nova twirls her long sparkly tusk.'},
+ {pet:'orca',need:{gems:30,seabosses:4},say:'Domino splashes you with her tail. Hee hee!'},
+];
+{const prng=mulberry32(90210),placed=[];
+ MORE_SEA.forEach(a=>{for(let t=0;t<4000;t++){const tx=10+Math.floor(prng()*(MW-20)),ty=10+Math.floor(prng()*(MH-20));
+   let ok=true;for(let y=-1;y<=1&&ok;y++)for(let x=-1;x<=1;x++)if(terr[(ty+y)*MW+tx+x]!==0){ok=false;break;}if(!ok||lairAt(tx,ty))continue;
+   if(SEA_BOSSES.some(b=>Math.hypot(tx-b.tx,ty-b.ty)<b.R+4))continue;if(WRECKS.some(w=>Math.hypot(w.tx-tx,w.ty-ty)<8))continue;
+   if([...placed,...ANIMALS.filter(x=>x.sea)].some(o=>Math.hypot(o.tx-tx,o.ty-ty)<28))continue;
+   let k=0,bd=1e9;ISLANDS.forEach((I,j)=>{const d=Math.hypot(I.x-tx,I.y-ty)-I.r;if(d<bd){bd=d;k=j;}});
+   const o={...a,tx,ty,x:(tx+.5)*T,y:(ty+.5)*T,island:k,sea:true};placed.push(o);ANIMALS.push(o);return;}
+   console.warn('no room in the sea for',a.pet);});}
 
 // minimap image
 const mm=document.createElement('canvas');mm.width=MW;mm.height=MH;
