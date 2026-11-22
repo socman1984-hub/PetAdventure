@@ -259,6 +259,30 @@ const PETS={
   frog:{e:'🐸',short:'Ribbit',name:'Ribbit the Frog',power:'Tongue Zap',pw:{hit:[18,22],stun:.3,fx:'👅'},world:'Can jump really far.'},
   croc:{e:'🐊',short:'Snappy',name:'Snappy the Crocodile',power:'Chomp Chomp',pw:{hit:[44,54],fx:'🐊'},world:'Has a big toothy smile.'},
   duck:{e:'🦆',short:'Puddles',name:'Puddles the Duck',power:'Quack Attack',pw:{hit:[14,18],dodge:1,fx:'💧'},world:'Splashes in every puddle.'},
+  // --- even more island friends
+  ladybug:{e:'🐞',short:'Dotty',name:'Dotty the Ladybug',power:'Lucky Spots',pw:{dodge:1,shield:1},world:'Brings good luck.'},
+  chick:{e:'🐣',short:'Peep',name:'Peep the Chick',power:'Peep Peep',pw:{heal:20,dodge:1},world:'Just hatched!'},
+  bluebird:{e:'🐦',short:'Sky',name:'Bluey the Bird',power:'Tweet Tune',pw:{heal:25,stun:.3,fx:'🎵'},world:'Sings every morning.'},
+  poodle:{e:'🐩',short:'Fifi',name:'Fifi the Poodle',power:'Fancy Prance',pw:{hit:[16,20],dodge:1,fx:'✨'},world:'The fanciest dog in the museum.'},
+  badger:{e:'🦡',short:'Digger',name:'Digger the Badger',power:'Dig Dash',pw:{hit:[22,28],weak:1,fx:'🕳️'},world:'Digs super fast tunnels.'},
+  caterpillar:{e:'🐛',short:'Munch',name:'Munch the Caterpillar',power:'Munch Munch',pw:{heal:25,shield:1},world:'Will be a butterfly one day!'},
+  butterfly:{e:'🦋',short:'Flutter',name:'Flutter the Butterfly',power:'Flutter Dust',pw:{hit:[10,14],stun:.5,dodge:1,fx:'✨'},world:'Has rainbow wings.'},
+  ant:{e:'🐜',short:'Tiny',name:'Tiny the Ant',power:'Ant Army',pw:{hit:[5,7],hits:5,fx:'🐜'},world:'Can carry 50 times her weight!'},
+  longneck:{e:'🦕',short:'Dippy',name:'Dippy the Long-Neck Dino',power:'Long Neck Whack',pw:{hit:[48,58],fx:'🦕'},world:'A gentle giant who eats leaves.'},
+  dromedary:{e:'🐪',short:'Dune',name:'Dune the Camel',power:'Sand Spit',pw:{hit:[20,26],stun:.3,fx:'💨'},world:'Has one hump and loves the desert.'},
+  lizard:{e:'🦎',short:'Blaze',name:'Blaze the Lava Lizard',power:'Hot Foot',pw:{hit:[24,30],crit:.25,fx:'🔥'},world:'Likes warm volcano rocks.'},
+  husky:{e:'🐕',short:'Blizzard',name:'Blizzard the Husky',power:'Snow Sprint',pw:{hit:[14,18],hits:2,fx:'❄️'},world:'Loves pulling sleds in the snow.'},
+  ox:{e:'🐂',short:'Moose',name:'Moose the Ox',power:'Big Pull',pw:{hit:[30,36],shield:1,fx:'💥'},world:'The strongest helper on the farm.'},
+  rooster:{e:'🐓',short:'Cocky',name:'Cocky the Rooster',power:'Wake-Up Call',pw:{hit:[12,16],stun:.6,fx:'📢'},world:'Cock-a-doodle-doo!'},
+  snail:{e:'🐌',short:'Speedy',name:'Speedy the Snail',power:'Slime Shield',pw:{shield:3},world:'Not very speedy at all.'},
+  buffalo:{e:'🐃',short:'Boulder',name:'Boulder the Water Buffalo',power:'Mud Stomp',pw:{hit:[34,42],stun:.3,fx:'💥'},world:'Loves cool mud baths.'},
+  boar:{e:'🐗',short:'Tusker',name:'Tusker the Boar',power:'Tusk Charge',pw:{hit:[28,34],crit:.2,fx:'💨'},world:'Sniffs out truffles.'},
+  fieldmouse:{e:'🐁',short:'Pip',name:'Pip the Field Mouse',power:'Tiny Nibble',pw:{hit:[8,10],hits:3,fx:'🌾'},world:'Lives in Bunny Burrow with the bunnies.'},
+  cricket:{e:'🦗',short:'Chirpy',name:'Chirpy the Cricket',power:'Chirp Song',pw:{hit:[10,14],stun:.5,fx:'🎵'},world:'Sings at night in the bamboo.'},
+  llama:{e:'🦙',short:'Lola',name:'Lola the Llama',power:'Fluffy Spit',pw:{hit:[18,24],stun:.4,fx:'💦'},world:'So fluffy you could hug her all day.'},
+  ram:{e:'🐏',short:'Rocky',name:'Rocky the Ram',power:'Horn Bash',pw:{hit:[34,40],weak:1,fx:'💥'},world:'Climbs the steepest mountains.'},
+  dove:{e:'🕊️',short:'Angel',name:'Angel the Dove',power:'Peace Feather',pw:{heal:35,shield:1},world:'A gentle, peaceful bird.'},
+  gecko:{e:'🦎',short:'Zip',name:'Zip the Desert Gecko',power:'Tail Trick',pw:{hit:[16,20],dodge:1,fx:'🌀'},world:'Can climb walls!'},
   // --- sea friends (found underwater)
   turtle:{e:'🐢',sea:1,short:'Shelly',name:'Shelly the Sea Turtle',power:'Shell Shield',pw:{shield:2,heal:10},world:'Swims across whole oceans.'},
   crab:{e:'🦀',sea:1,short:'Pinchy',name:'Pinchy the Crab',power:'Pinch Pinch',pw:{hit:[10,13],hits:2,fx:'🦀'},world:'Walks sideways.'},
@@ -590,6 +614,30 @@ const LAND_BOSSES=[
 ];
 LAND_BOSSES.forEach(b=>{const k=ISLANDS.findIndex(I=>I.id===b.island),I=ISLANDS[k];b.islandIdx=k;b.tx=I.x+b.dx;b.ty=I.y+b.dy;b.x=(b.tx+.5)*T;b.y=(b.ty+.5)*T;
   forceLand(b.tx,b.ty,2,k);reserve(b.tx,b.ty,3);const bi=BIOME[I.biome];b.sky=bi.sky;b.ground=bi.ground;});
+// more island animals, placed on open land of their island, away from people, other animals and lairs
+const EXTRA_ANIMALS={
+ home:[{pet:'ladybug',need:{items:{strawberry:2}},say:'Dotty crawls onto your finger.'},{pet:'chick',need:{items:{corn:2}},say:'Peep says peep peep!'}],
+ kitty:[{pet:'bluebird',need:{items:{grapes:2}},say:'Bluey sings you a little song.'}],
+ museum:[{pet:'poodle',need:{items:{tomato:2},books:2},say:'Fifi prances in a little circle.'}],
+ maple:[{pet:'badger',need:{items:{tomato:3},wins:2},say:'Digger pops his head out of a hole.'},{pet:'caterpillar',need:{items:{apple:3}},say:'Munch is munching a leaf.'}],
+ sparkle:[{pet:'butterfly',need:{items:{strawberry:3,grapes:2}},say:'Flutter lands on a flower near you.'}],
+ savanna:[{pet:'ant',need:{items:{corn:2},wins:1},say:'Tiny is carrying a giant crumb!'}],
+ jungle:[{pet:'longneck',need:{items:{watermelon:4},wins:9},say:'Dippy munches leaves from the very top of a tree.'}],
+ outback:[{pet:'dromedary',need:{items:{banana:4},wins:5},say:'Dune blinks her long eyelashes at you.'},{pet:'gecko',need:{items:{banana:2},wins:2},say:'Zip zips up a rock.'}],
+ volcano:[{pet:'lizard',need:{items:{pumpkin:2},wins:6},say:'Blaze is sunbathing on a warm rock.'}],
+ frosty:[{pet:'husky',need:{items:{apple:3},wins:5},say:'Blizzard wags his fluffy tail.'}],
+ farm:[{pet:'ox',need:{items:{corn:6},wins:4},say:'Moose gives a slow, friendly moo.'},{pet:'rooster',need:{items:{corn:3},wins:2},say:'Cocky crows: COCK-A-DOODLE-DOO!'}],
+ swamp:[{pet:'snail',need:{items:{strawberry:2}},say:'Speedy is... still on his way over.'},{pet:'buffalo',need:{items:{watermelon:3},wins:5},say:'Boulder is resting in the mud.'},{pet:'boar',need:{items:{pumpkin:3},wins:4},say:'Tusker snuffles around your feet.'}],
+ bunny:[{pet:'fieldmouse',need:{items:{carrot:3}},say:'Pip peeks out of a burrow.'}],
+ bamboo:[{pet:'cricket',need:{items:{apple:2},wins:3},say:'Chirpy chirps a happy tune.'}],
+ wolf:[{pet:'llama',need:{items:{corn:4},wins:3},say:'Lola tilts her fluffy head at you.'},{pet:'ram',need:{items:{apple:4},wins:6},say:'Rocky stomps on a rock.'}],
+ peacock:[{pet:'dove',need:{items:{grapes:3},books:3},say:'Angel coos softly.'}],
+};
+ISLANDS.forEach((I,k)=>{const list=EXTRA_ANIMALS[I.id];if(!list)return;const prng=mulberry32(4242+k*97);
+  const free=(tx,ty)=>{for(let y=ty-2;y<=ty+2;y++)for(let x=tx-2;x<=tx+2;x++){const i=y*MW+x;if(x<0||y<0||x>=MW||y>=MH||terr[i]<3||solid[i]||reserved[i])return false;}return true;};
+  list.forEach(a=>{for(let t=0;t<400;t++){const ang=prng()*6.283,rr=I.r*(.2+prng()*.38),tx=Math.round(I.x+Math.cos(ang)*rr),ty=Math.round(I.y+1+Math.sin(ang)*rr);
+    if(!free(tx,ty))continue;reserve(tx,ty,1);ANIMALS.push({...a,tx,ty,x:(tx+.5)*T,y:(ty+.5)*T,island:k});return;}
+    console.warn('no room for',a.pet);});});
 // trees & decorations
 for(let i=0;i<N;i++){
   if(terr[i]!==3||reserved[i]||solid[i])continue;const bi=BIOME[ISLANDS[isl[i]].biome];const r=srng();
