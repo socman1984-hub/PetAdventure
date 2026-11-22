@@ -32,7 +32,7 @@ button:focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
 #race{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);text-align:center;font-weight:700;font-size:14px;white-space:nowrap}
 #race .bar{display:flex;gap:3px;justify-content:center;font-size:15px}
 #topRight{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;align-items:flex-end;gap:6px}
-#mini{width:170px;height:125px;border-radius:12px;border:3px solid #fff;box-shadow:0 4px 0 rgba(58,42,77,.25);background:#1f7fc4;cursor:pointer}
+#mini{width:150px;height:145px;border-radius:12px;border:3px solid #fff;box-shadow:0 4px 0 rgba(58,42,77,.25);background:#1f7fc4;cursor:pointer}
 #weatherTag{font-weight:700;font-size:14px}
 #invBar{display:flex;flex-wrap:wrap;gap:2px 8px;font-size:15px;font-weight:700;margin-top:2px;padding-top:3px;border-top:2px dashed #ecdcc4}
 #invBar:empty{display:none}
@@ -101,7 +101,7 @@ body.touch #touch{display:block}
 .bigBtn{background:var(--accent);color:#fff;font-weight:800;font-size:22px;padding:8px 26px;border-radius:999px;box-shadow:0 5px 0 #c93c7c;margin:12px 6px 0}
 .bigBtn.alt{background:var(--accent2);box-shadow:0 5px 0 #5638d6}
 @media (max-width:640px){
-  #mini{width:110px;height:81px}
+  #mini{width:100px;height:97px}
   #race{top:auto;bottom:calc(66px + env(safe-area-inset-bottom,0px));font-size:12px}
   body.touch #race{bottom:auto;top:calc(146px + env(safe-area-inset-top,0px));left:auto;right:max(10px,env(safe-area-inset-right,0px));transform:none}
   #who{font-size:15px}#petsRow{font-size:18px}
@@ -129,7 +129,7 @@ body.touch #touch{display:block}
 <div id="hud" class="hidden">
   <div id="topLeft" class="card"><div id="who"></div><div id="petsRow"></div><div id="invBar" title="Your snacks"></div></div>
   <div id="race" class="card"></div>
-  <div id="topRight"><canvas id="mini" width="170" height="125" title="Open map"></canvas><div id="weatherTag" class="card"></div></div>
+  <div id="topRight"><canvas id="mini" width="150" height="145" title="Open map"></canvas><div id="weatherTag" class="card"></div></div>
   <div id="btns">
     <button class="rbtn" id="bBag" title="Backpack (I)">🎒</button>
     <button class="rbtn" id="bMap" title="Map (M)">🗺️</button>
@@ -151,7 +151,7 @@ body.touch #touch{display:block}
   <div id="tbox">
     <div class="parade">🐶🐱🦄🐆🐠</div>
     <h1>Pet Islands</h1>
-    <div class="sub">Sail, fly, make animal friends, and beat three giant bosses!</div>
+    <div class="sub">Sail, fly, dive, make animal friends, and beat three giant bosses!</div>
     <div><b>Pick your hero:</b></div>
     <div id="chars"></div>
     <div><input id="nameIn" maxlength="14" value="Addison" aria-label="Your name"></div>
@@ -207,16 +207,17 @@ const SFX={
 };
 
 // ================= data =================
-const T=32,MW=340,MH=250;
+const T=32,MW=600,MH=580;
 const CROPS={
   carrot:{e:'🥕',n:'Carrot',heal:20}, strawberry:{e:'🍓',n:'Strawberry',heal:15}, tomato:{e:'🍅',n:'Tomato',heal:15},
   corn:{e:'🌽',n:'Corn',heal:20}, apple:{e:'🍎',n:'Apple',heal:18}, watermelon:{e:'🍉',n:'Watermelon',heal:35},
   pumpkin:{e:'🎃',n:'Pumpkin',heal:30}, grapes:{e:'🍇',n:'Grapes',heal:15}, banana:{e:'🍌',n:'Banana',heal:20},
 };
+// Pets with a "pw" use the shared power engine: hit (damage range), hits, crit, stun (chance), heal, shield, dodge, weak, fx (projectile).
 const PETS={
   dog:{e:'🐶',short:'Buddy',name:'Buddy the Dog',power:'Bark Blast',desc:'A giant bark! Often makes the other side too surprised to move.',world:'Your very first friend.'},
   cat:{e:'🐱',short:'Whiskers',name:'Whiskers the Cat',power:'Lucky Purr',desc:'Heals you a little and makes you dodge the next attack.',world:'Always lands on her feet.'},
-  blackcat:{e:'🐈‍⬛',short:'Midnight',name:'Midnight the Black Cat',power:'Night Swipe',desc:'A sneaky swipe, then you dodge the next attack.',world:'Loves quiet museums and books.'},
+  blackcat:{e:'🐈',short:'Midnight',name:'Midnight the Cat',power:'Night Swipe',desc:'A sneaky swipe, then you dodge the next attack.',world:'Loves quiet museums and books.'},
   unicorn:{e:'🦄',short:'Sparkle',name:'Sparkle the Unicorn',power:'Rainbow Beam',desc:'A super strong rainbow blast!',world:'Leaves a trail of sparkles.'},
   cheetah:{e:'🐆',badge:'⚡',short:'Zoom',name:'Zoom the Cheetah',power:'Speed Dash',desc:'Zooms in and hits 3 times super fast.',world:'Makes you walk faster!'},
   leopard:{e:'🐆',short:'Spots',name:'Spots the Leopard',power:'Jungle Pounce',desc:'A huge pounce. Sometimes a DOUBLE hit!',world:'Great at climbing.'},
@@ -229,11 +230,51 @@ const PETS={
   fox:{e:'🦊',short:'Rusty',name:'Rusty the Fox',power:'Trick Tail',desc:'A tricky hit that also heals you a little.',world:'Very clever.'},
   kangaroo:{e:'🦘',short:'Boing',name:'Boing the Kangaroo',power:'Boxing Hop',desc:'Two quick boxing punches!',world:'Can hop super high.'},
   koala:{e:'🐨',short:'Snoozy',name:'Snoozy the Koala',power:'Sleepy Song',desc:'Often puts the other side to sleep for a turn.',world:'Naps 20 hours a day.'},
+  // --- new land friends
+  hedgehog:{e:'🦔',short:'Prickles',name:'Prickles the Hedgehog',power:'Spiky Ball',pw:{hit:[16,22],weak:1,fx:'🦔'},world:'Rolls into a spiky ball.'},
+  hamster:{e:'🐹',short:'Nibbles',name:'Nibbles the Hamster',power:'Cheek Snack',pw:{heal:30},world:'Keeps snacks in her cheeks.'},
+  squirrel:{e:'🐿️',short:'Nutty',name:'Nutty the Squirrel',power:'Acorn Toss',pw:{hit:[8,11],hits:3,fx:'🌰'},world:'Collects acorns all day.'},
+  owl:{e:'🦉',short:'Hoot',name:'Hoot the Owl',power:'Wise Hoot',pw:{hit:[10,14],stun:.7,fx:'🌙'},world:'Stays up all night reading.'},
+  bear:{e:'🐻',short:'Bruno',name:'Bruno the Bear',power:'Big Paw Swipe',pw:{hit:[34,42],fx:'🐾'},world:'Loves honey and naps.'},
+  raccoon:{e:'🦝',short:'Bandit',name:'Bandit the Raccoon',power:'Sneaky Snack',pw:{heal:20,dodge:1},world:'Wears a little mask.'},
+  giraffe:{e:'🦒',short:'Stretch',name:'Stretch the Giraffe',power:'Long Neck Bonk',pw:{hit:[28,34],fx:'🦒'},world:'The tallest animal on land.'},
+  zebra:{e:'🦓',short:'Ziggy',name:'Ziggy the Zebra',power:'Stripe Dazzle',pw:{hit:[18,24],stun:.4,fx:'✨'},world:'Every zebra has its own stripes.'},
+  elephant:{e:'🐘',short:'Peanut',name:'Peanut the Elephant',power:'Trunk Splash',pw:{hit:[45,55],fx:'💦'},world:'Never forgets a friend.'},
+  rhino:{e:'🦏',short:'Tank',name:'Tank the Rhino',power:'Horn Charge',pw:{hit:[38,46],crit:.25,fx:'🦏'},world:'Big, strong and gentle.'},
+  hippo:{e:'🦛',short:'Bubba',name:'Bubba the Hippo',power:'Mud Bath',pw:{heal:35,shield:1},world:'Loves a good mud bath.'},
+  monkey:{e:'🐒',short:'Cheeky',name:'Cheeky the Monkey',power:'Banana Barrage',pw:{hit:[7,10],hits:4,fx:'🍌'},world:'Swings through the trees.'},
+  gorilla:{e:'🦍',short:'Kong',name:'Kong the Gorilla',power:'Chest Pound',pw:{hit:[40,48],weak:1,fx:'💥'},world:'Super strong and super kind.'},
+  parrot:{e:'🦜',short:'Polly',name:'Polly the Parrot',power:'Copycat Squawk',pw:{hit:[20,26],dodge:1,fx:'🎵'},world:'Repeats everything you say!'},
+  panda:{e:'🐼',short:'Bao',name:'Bao the Panda',power:'Bamboo Bop',pw:{hit:[24,30],heal:15,fx:'🎋'},world:'Munches bamboo all day.'},
+  wolf:{e:'🐺',short:'Shadow',name:'Shadow the Wolf',power:'Moon Howl',pw:{hit:[30,36],weak:1,fx:'🌕'},world:'Howls at the moon.'},
+  eagle:{e:'🦅',short:'Sky',name:'Sky the Eagle',power:'Sky Dive',pw:{hit:[32,40],crit:.3,fx:'🦅'},world:'Sees everything from up high.'},
+  peacock:{e:'🦚',short:'Plume',name:'Plume the Peacock',power:'Feather Fan',pw:{shield:1,dodge:1},world:'Shows off a rainbow tail.'},
+  swan:{e:'🦢',short:'Grace',name:'Grace the Swan',power:'Graceful Glide',pw:{heal:25,dodge:1},world:'Glides across the water.'},
+  pony:{e:'🐴',short:'Clover',name:'Clover the Pony',power:'Gallop Kick',pw:{hit:[12,16],hits:2,fx:'🐴'},world:'Loves to gallop.'},
+  pig:{e:'🐷',short:'Truffles',name:'Truffles the Pig',power:'Mud Splat',pw:{hit:[16,20],stun:.3,fx:'🍫'},world:'Oink oink!'},
+  cow:{e:'🐮',short:'Daisy',name:'Daisy the Cow',power:'Moo-sic',pw:{heal:30},world:'Moos the sweetest songs.'},
+  sheep:{e:'🐑',short:'Fluffy',name:'Fluffy the Sheep',power:'Fluffy Wall',pw:{shield:2},world:'So soft and fluffy.'},
+  chicken:{e:'🐔',short:'Nugget',name:'Nugget the Chicken',power:'Egg Drop',pw:{hit:[9,12],hits:3,fx:'🥚'},world:'Lays an egg every morning.'},
+  goat:{e:'🐐',short:'Billy',name:'Billy the Goat',power:'Head Butt',pw:{hit:[26,32],fx:'💫'},world:'Climbs anything.'},
+  frog:{e:'🐸',short:'Ribbit',name:'Ribbit the Frog',power:'Tongue Zap',pw:{hit:[18,22],stun:.3,fx:'👅'},world:'Can jump really far.'},
+  croc:{e:'🐊',short:'Snappy',name:'Snappy the Crocodile',power:'Chomp Chomp',pw:{hit:[44,54],fx:'🐊'},world:'Has a big toothy smile.'},
+  duck:{e:'🦆',short:'Puddles',name:'Puddles the Duck',power:'Quack Attack',pw:{hit:[14,18],dodge:1,fx:'💧'},world:'Splashes in every puddle.'},
+  // --- sea friends (found underwater)
+  turtle:{e:'🐢',sea:1,short:'Shelly',name:'Shelly the Sea Turtle',power:'Shell Shield',pw:{shield:2,heal:10},world:'Swims across whole oceans.'},
+  crab:{e:'🦀',sea:1,short:'Pinchy',name:'Pinchy the Crab',power:'Pinch Pinch',pw:{hit:[10,13],hits:2,fx:'🦀'},world:'Walks sideways.'},
+  puffer:{e:'🐡',sea:1,bubble:true,short:'Puffy',name:'Puffy the Pufferfish',power:'Puff Up',pw:{hit:[14,18],shield:1,fx:'🐡'},world:'Puffs up like a balloon.'},
+  dolphin:{e:'🐬',sea:1,short:'Splash',name:'Splash the Dolphin',power:'Wave Ride',pw:{hit:[30,36],heal:10,fx:'🌊'},world:'Loves to jump and play.'},
+  lobster:{e:'🦞',sea:1,short:'Snips',name:'Snips the Lobster',power:'Claw Snap',pw:{hit:[24,30],crit:.3,fx:'🦞'},world:'Has two big claws.'},
+  shark:{e:'🦈',sea:1,short:'Finn',name:'Finn the Shark',power:'Shark Fin',pw:{hit:[44,52],fx:'🦈'},world:'A friendly shark who only eats veggies!'},
+  whale:{e:'🐳',sea:1,short:'Big Blue',name:'Big Blue the Whale',power:'Giant Splash',pw:{hit:[55,65],stun:.5,fx:'🌊'},world:'The biggest friend of all.'},
+  // --- boss friends
   dragon:{e:'🐲',short:'Ember',name:'Ember the Baby Dragon',power:'Star Breath',desc:'A huge blast of star fire!',world:'Was the Shadow Dragon. Now a happy friend.'},
   octopus:{e:'🐙',short:'Inky',name:'Inky the Octopus',power:'Ink Splash',desc:'A big splash that also stuns the other side.',world:'Was the Frost Kraken. Now a cuddly friend.'},
   rex:{e:'🦖',short:'Rexy',name:'Rexy the Dino',power:'Dino Stomp',desc:'The strongest power of all!',world:'Was Mega Rex. Now a silly baby dino.'},
 };
-const PET_ORDER=['dog','cat','blackcat','bunny','fish','deer','fox','unicorn','cheetah','leopard','lion','kangaroo','koala','tiger','penguin','dragon','octopus','rex'];
+function describePower(w){const p=[];if(w.hit)p.push((w.hits>1?`${w.hits} quick hits`:'A strong hit')+(w.crit?' that can be a DOUBLE hit':''));if(w.heal)p.push(`heals ${w.heal} energy`);if(w.shield)p.push(`a shield that blocks ${w.shield} attack${w.shield>1?'s':''}`);if(w.dodge)p.push('makes you dodge the next attack');if(w.weak)p.push('makes the next attack on you weaker');if(w.stun)p.push(`${w.stun>=.6?'often':'sometimes'} stuns the other side`);const s=p.join(', ');return s.charAt(0).toUpperCase()+s.slice(1)+'.';}
+Object.values(PETS).forEach(p=>{if(p.pw&&!p.desc)p.desc=describePower(p.pw);});
+const PET_ORDER=Object.keys(PETS);
 const BOSS_PET_HINT={dragon:'Beat the Shadow Dragon to meet this friend.',octopus:'Beat the Frost Kraken to meet this friend.',rex:'Beat Mega Rex to meet this friend.'};
 
 // Bosses wake one at a time, in this order, each time you win the Boss Race.
@@ -253,63 +294,83 @@ const BOSSES=[
 ];
 
 const ISLANDS=[
- {id:'home',name:'Home Island',x:60,y:120,r:22,biome:'grass',boats:[0,Math.PI/2,-2.3,Math.PI,-0.8],
+ {id:'home',name:'Home Island',x:105,y:210,r:28,biome:'grass',boats:[0,Math.PI/2,-2.3,Math.PI,-0.8],
   feats:[{k:'house',dx:-6,dy:-7}],
   npcs:[
-   {id:'rosie',name:'Grandma Rosie',e:'👵',dx:-2,dy:-4,lines:['Hello sweetie! Welcome to Pet Islands! 🌴','Walk around and explore. Some islands are HUGE!','Animals won\'t join you right away. Bring them gifts and win battles to earn their trust.','Hop in a boat ⛵ on the beach to sail to other islands!','Every animal here is friendly. They will never hurt you. 💕','Open your backpack 🎒 to see what each animal needs, and to pick your battle team.']},
-   {id:'joe',name:'Farmer Joe',e:'🧑‍🌾',dx:8,dy:2,lines:['Howdy! Walk over the ripe veggies in my garden to pick them!','Rain makes plants grow back twice as fast! 🌧️','You can only eat 3 snacks in each battle, so pick good ones! A watermelon 🍉 heals the most.','Hops the bunny wants 6 carrots. Better start picking! 🥕']},
-   {id:'kim',name:'Coach Kim',e:'🧑‍🏫',dx:-9,dy:5,fight:1,lines:['Want to practice battling? I\'m the easiest battler around.','Each pet power needs to rest for 3 turns after you use it.','Pick your best 4 pets for your battle team in the backpack!']},
+   {id:'rosie',name:'Grandma Rosie',e:'👵',dx:-2,dy:-4,lines:['Hello sweetie! Welcome to Pet Islands! 🌴','The world is HUGE now. Open the map 🗺️ to see all the islands!','Animals won\'t join you right away. Bring them gifts and win battles to earn their trust.','Sail a boat ⛵ out to sea, then tap 🌊 Dive to explore under the water!','Every animal here is friendly. They will never hurt you. 💕','Open your backpack 🎒 to see what each animal needs, and to pick your battle team.']},
+   {id:'joe',name:'Farmer Joe',e:'👨‍🌾',dx:8,dy:2,lines:['Howdy! Walk over the ripe veggies in my garden to pick them!','Rain makes plants grow back twice as fast! 🌧️','You can only eat 3 snacks in each battle, so pick good ones! A watermelon 🍉 heals the most.','My cousin Nell runs a giant farm way down south. Lots of farm animals there!']},
+   {id:'kim',name:'Coach Kim',e:'👨‍🏫',dx:-9,dy:5,fight:1,lines:['Want to practice battling? I\'m the easiest battler around.','Each pet power needs to rest for 3 turns after you use it.','Pick your best 4 pets for your battle team in the backpack!']},
    {id:'chloe',name:'Champion Chloe',e:'👩‍🦰',dx:12,dy:-9,fight:7,lines:['I\'m the island champion. Nobody has EVER beaten me!','Come back when you have a really strong team.']},
   ],
-  garden:{dx:2,dy:6,crops:['carrot','carrot','carrot','carrot','strawberry','strawberry','strawberry','strawberry','pumpkin','pumpkin','apple','apple']}},
- {id:'kitty',name:'Kitty Cove',x:25,y:45,r:8,biome:'grass',boats:[1.1,0],
+  animals:[
+   {pet:'hedgehog',dx:-12,dy:-2,need:{items:{apple:3}},say:'Prickles is curled up in a little ball.'},
+   {pet:'hamster',dx:4,dy:-10,need:{items:{corn:2,carrot:2}},say:'Nibbles stuffs a seed in her cheek.'},
+  ],
+  garden:{dx:2,dy:6,crops:['carrot','carrot','carrot','carrot','strawberry','strawberry','strawberry','strawberry','pumpkin','pumpkin','apple','apple','corn','corn']}},
+ {id:'kitty',name:'Kitty Cove',x:44,y:79,r:10,biome:'grass',boats:[1.1,0],
   npcs:[{id:'lily',name:'Lily',e:'👧',dx:2,dy:1,lines:['My kitty Whiskers wants to go on adventures!','She is a little picky though. She wants 4 strawberries 🍓 first.','Cats love naps in the sunshine ☀️']}],
-  animals:[{pet:'cat',dx:-2,dy:-2,need:{items:{strawberry:4}},say:'Whiskers sniffs the air for strawberries.'}]},
- {id:'museum',name:'Museum Isle',x:110,y:40,r:20,biome:'grass',boats:[2.2,Math.PI/2,0,Math.PI],
+  animals:[{pet:'cat',dx:-2,dy:-2,need:{items:{strawberry:4}},say:'Whiskers sniffs the air for strawberries.'}],
+  seaAnimals:[{pet:'crab',ang:2.6}]},
+ {id:'museum',name:'Museum Isle',x:192,y:70,r:25,biome:'grass',boats:[2.2,Math.PI/2,0,Math.PI],
   feats:[{k:'museum',museum:'great',dx:0,dy:-6}],
   npcs:[
-   {id:'page',name:'Professor Page',e:'👩‍🏫',dx:4,dy:-2,lines:['Welcome to the Great Museum! Walk to the door to go in.','Midnight the black cat only trusts real readers. Read 6 books in the museums!','There\'s another museum, the Ice Museum, way up on Frosty Island.']},
-   {id:'coco',name:'Coco the Painter',e:'👩‍🎨',dx:-7,dy:0,lines:['I painted the Starry Sea painting in the museum! 🎨','The weather changes all the time here. Rainbows are my favorite! 🌈','Try flying over the sea. The islands look so big from up there!']},
+   {id:'page',name:'Professor Page',e:'👩‍🏫',dx:4,dy:-2,lines:['Welcome to the Great Museum! Walk to the door to go in.','Midnight the cat only trusts real readers. Read 6 books in the museums!','There\'s another museum, the Ice Museum, way up on Frosty Island.']},
+   {id:'coco',name:'Coco the Painter',e:'👩‍🎨',dx:-7,dy:0,lines:['I painted the Starry Sea painting in the museum! 🎨','The weather changes all the time here. Rainbows are my favorite! 🌈','Have you dived under the sea yet? It\'s so pretty down there!']},
    {id:'max',name:'Max',e:'👦',dx:-5,dy:7,fight:2,lines:['I\'m Max! I\'ve won like a hundred battles! ...Okay, two.','My water balloons are super fast!']},
   ],
   animals:[{pet:'blackcat',dx:7,dy:-7,need:{books:6},say:'Midnight is curled up reading by the museum.'}],
   garden:{dx:3,dy:6,crops:['tomato','tomato','tomato','strawberry','strawberry','strawberry','apple','banana']}},
- {id:'maple',name:'Maple Woods',x:115,y:118,r:14,biome:'forest',boats:[Math.PI,0,-Math.PI/2,Math.PI/2],
+ {id:'maple',name:'Maple Woods',x:201,y:206,r:18,biome:'forest',boats:[Math.PI,0,-Math.PI/2,Math.PI/2],
   npcs:[
-   {id:'fern',name:'Elf Willow',e:'🧝',dx:3,dy:-3,lines:['Shh... the forest animals are shy. 🌲','Fern the deer loves apples 🍎. She also wants to see that you are brave.','Rusty the fox likes pumpkins 🎃, and only follows strong battlers.']},
+   {id:'fern',name:'Elf Willow',e:'🧝',dx:3,dy:-3,lines:['Shh... the forest animals are shy. 🌲','Fern the deer loves apples 🍎. She also wants to see that you are brave.','Hoot the owl only trusts readers. Bruno the bear loves watermelon!']},
    {id:'woody',name:'Woody',e:'🧔',dx:-5,dy:4,fight:3,lines:['I chop wood all day. I\'m super strong!','Battle me if you dare!']},
   ],
   animals:[
    {pet:'deer',dx:-3,dy:-4,need:{items:{apple:5},wins:2},say:'Fern hides behind a tree and peeks at you.'},
    {pet:'fox',dx:5,dy:3,need:{items:{pumpkin:3},wins:4},say:'Rusty sniffs you, then runs in a little circle.'},
+   {pet:'squirrel',dx:-8,dy:0,need:{items:{apple:4}},say:'Nutty chatters at you from a branch.'},
+   {pet:'owl',dx:8,dy:-6,need:{books:4,wins:3},say:'Hoot blinks at you slowly. Hoo hoo.'},
+   {pet:'bear',dx:0,dy:-10,need:{items:{watermelon:3},wins:6},say:'Bruno yawns a great big bear yawn.'},
+   {pet:'raccoon',dx:-6,dy:8,need:{items:{tomato:4}},say:'Bandit peeks into your backpack.'},
   ],
-  garden:{dx:-3,dy:6,crops:['apple','apple','apple','apple','pumpkin','pumpkin']}},
- {id:'sparkle',name:'Sparkle Island',x:120,y:195,r:12,biome:'sparkle',boats:[-2.4,-Math.PI/2,0],
+  garden:{dx:-3,dy:6,crops:['apple','apple','apple','apple','pumpkin','pumpkin','tomato','tomato']}},
+ {id:'sparkle',name:'Sparkle Island',x:210,y:341,r:15,biome:'sparkle',boats:[-2.4,-Math.PI/2,0],
   npcs:[{id:'twinkle',name:'Fairy Twinkle',e:'🧚',dx:3,dy:-2,lines:['Sparkle the unicorn is very shy...','She wants 6 strawberries 🍓 AND 3 bunches of grapes 🍇 before she will trust you.','Did you know you can fly? ✨']}],
   animals:[{pet:'unicorn',dx:-2,dy:0,need:{items:{strawberry:6,grapes:3}},say:'Sparkle tosses her rainbow mane.'}],
+  seaAnimals:[{pet:'puffer',ang:Math.PI/2}],
   garden:{dx:-3,dy:4,crops:['strawberry','strawberry','grapes','grapes']}},
- {id:'savanna',name:'Savanna Island',x:200,y:130,r:34,biome:'savanna',boats:[Math.PI,-Math.PI/2,Math.PI/2,0,2.5,-2.4],
+ {id:'savanna',name:'Savanna Island',x:350,y:227,r:42,biome:'savanna',boats:[Math.PI,-Math.PI/2,Math.PI/2,0,2.5,-2.4,0.8],
   npcs:[
-   {id:'rita',name:'Ranger Rita',e:'🤠',dx:0,dy:3,lines:['Welcome to Savanna Island, the biggest island of all!','Zoom the cheetah only joins people with 4 wins.','Spots the leopard wants 6 corn 🌽 and 3 wins.','Leo the lion is the king. He only joins true champions with 10 wins!']},
+   {id:'rita',name:'Ranger Rita',e:'🤠',dx:0,dy:3,lines:['Welcome to Savanna Island, one of the biggest islands of all!','Zoom the cheetah only joins people with 4 wins.','Giraffes, zebras, elephants and rhinos live here too. Explore everywhere!','Leo the lion is the king. He only joins true champions with 10 wins!']},
    {id:'zeke',name:'Zippy Zeke',e:'🧑',dx:10,dy:-4,fight:3,lines:['I\'m the fastest battler on the savanna!','Ready, set... BATTLE?']},
    {id:'sunny',name:'Sunny Sam',e:'👩',dx:-9,dy:-8,fight:3,lines:['The sun makes me strong! ☀️','Let\'s have a friendly battle!']},
-   {id:'leo',name:'Lion Tamer Lou',e:'🧑‍🎤',dx:14,dy:10,fight:5,lines:['I trained with lions! My battles are TOUGH.','Bring snacks. You\'ll need them.']},
+   {id:'leo',name:'Lion Tamer Lou',e:'👩‍🎤',dx:14,dy:10,fight:5,lines:['I trained with lions! My battles are TOUGH.','Bring snacks. You\'ll need them.']},
   ],
   animals:[
    {pet:'cheetah',dx:8,dy:8,need:{wins:4},say:'Zoom zips past you, then stops to look.'},
    {pet:'leopard',dx:-12,dy:6,need:{items:{corn:6},wins:3},say:'Spots watches you from a tree branch.'},
    {pet:'lion',dx:0,dy:-14,need:{wins:10},say:'Leo gives a big royal yawn.'},
+   {pet:'giraffe',dx:-18,dy:-12,need:{items:{apple:6},wins:5},say:'Stretch looks down at you from way up high.'},
+   {pet:'zebra',dx:20,dy:-8,need:{items:{corn:4},wins:3},say:'Ziggy flicks her stripy tail.'},
+   {pet:'elephant',dx:-20,dy:14,need:{items:{watermelon:5},wins:9},say:'Peanut sprays a little water from her trunk.'},
+   {pet:'rhino',dx:22,dy:16,need:{wins:8},say:'Tank snorts and stomps his foot.'},
   ],
-  garden:{dx:-4,dy:-2,crops:['corn','corn','corn','corn','corn','corn','watermelon','watermelon']}},
- {id:'jungle',name:'Tiger Jungle',x:195,y:40,r:26,biome:'jungle',boats:[Math.PI,Math.PI/2,0,2.4],
+  seaAnimals:[{pet:'dolphin',ang:Math.PI/2+0.3}],
+  garden:{dx:-4,dy:-2,crops:['corn','corn','corn','corn','corn','corn','watermelon','watermelon','apple','apple']}},
+ {id:'jungle',name:'Tiger Jungle',x:341,y:70,r:32,biome:'jungle',boats:[Math.PI,Math.PI/2,0,2.4],
   npcs:[
-   {id:'ava',name:'Explorer Ava',e:'🧗',dx:-3,dy:6,lines:['Welcome to Tiger Jungle! It\'s so big you could get lost!','Stripes the tiger wants 4 watermelons 🍉 and 8 wins. He is very hard to impress.','I heard something HUGE sleeping in this jungle... 🦖']},
+   {id:'ava',name:'Explorer Ava',e:'🧗',dx:-3,dy:6,lines:['Welcome to Tiger Jungle! It\'s so big you could get lost!','Stripes the tiger wants 4 watermelons 🍉 and 8 wins.','Monkeys LOVE bananas. Polly the parrot likes smart friends who read books.','I heard something HUGE sleeping in this jungle... 🦖']},
    {id:'vine',name:'Captain Vine',e:'🦸',dx:8,dy:-3,fight:6,lines:['I swing through the trees! Can you keep up?','My battles are some of the hardest around.']},
   ],
-  animals:[{pet:'tiger',dx:-9,dy:-5,need:{items:{watermelon:4},wins:8},say:'Stripes stares at you with big golden eyes.'}],
+  animals:[
+   {pet:'tiger',dx:-9,dy:-5,need:{items:{watermelon:4},wins:8},say:'Stripes stares at you with big golden eyes.'},
+   {pet:'monkey',dx:12,dy:6,need:{items:{banana:6}},say:'Cheeky swings upside down from a vine.'},
+   {pet:'gorilla',dx:-14,dy:10,need:{items:{banana:8},wins:9},say:'Kong sits quietly and watches you.'},
+   {pet:'parrot',dx:6,dy:-12,need:{items:{grapes:4},books:3},say:'Polly says "HELLO! HELLO!"'},
+  ],
   boss:{idx:2,dx:4,dy:10},
-  garden:{dx:-11,dy:4,crops:['banana','banana','banana','watermelon','watermelon','watermelon']}},
- {id:'outback',name:'Outback Island',x:290,y:125,r:20,biome:'outback',boats:[Math.PI,-Math.PI/2,Math.PI/2],
+  garden:{dx:-11,dy:4,crops:['banana','banana','banana','banana','watermelon','watermelon','watermelon','grapes']}},
+ {id:'outback',name:'Outback Island',x:507,y:219,r:25,biome:'outback',boats:[Math.PI,-Math.PI/2,Math.PI/2,0],
   npcs:[
    {id:'ollie',name:'Outback Ollie',e:'👨‍🦰',dx:-2,dy:3,lines:['G\'day! Welcome to the Outback! 🦘','Boing the kangaroo wants 5 bananas 🍌 and 5 wins.','Snoozy the koala is always asleep. Win 7 battles and maybe she\'ll wake up for you.']},
    {id:'dusty',name:'Dusty Dan',e:'👷',dx:6,dy:-4,fight:4,lines:['Dust storms make me tough!','Fancy a battle, mate?']},
@@ -319,29 +380,85 @@ const ISLANDS=[
    {pet:'koala',dx:5,dy:6,need:{wins:7},say:'Snoozy is fast asleep in a tree. Zzz...'},
   ],
   garden:{dx:-5,dy:7,crops:['banana','banana','banana','grapes','grapes']}},
- {id:'coral',name:'Coral Reef',x:175,y:225,r:6,biome:'sand',boats:[-1.2,Math.PI,0],
-  npcs:[{id:'marina',name:'Marina',e:'🧜‍♀️',dx:2,dy:1,lines:['Hi! I\'m Marina! 🐚','Bubbles the fish only follows brave battlers. Win 2 battles first!','When she joins, I\'ll give her a magic bubble so she can float on land!']}],
-  animals:[{pet:'fish',dx:-1,dy:-1,need:{wins:2},say:'Bubbles blows a tiny bubble at you.'}]},
- {id:'frosty',name:'Frosty Island',x:300,y:40,r:24,biome:'snow',boats:[Math.PI/2,Math.PI,2.4],
+ {id:'coral',name:'Coral Reef',x:306,y:394,r:8,biome:'sand',boats:[-1.2,Math.PI,0],
+  npcs:[{id:'marina',name:'Marina',e:'🧜‍♀️',dx:2,dy:1,lines:['Hi! I\'m Marina! 🐚','Sail out in a boat and tap 🌊 Dive (or press E) to swim under the sea!','Down there you can find treasure chests full of sea gems 💎. Sea animals love sea gems!','Bubbles the fish only follows brave battlers. Win 2 battles first!']}],
+  animals:[{pet:'fish',dx:-1,dy:-1,need:{wins:2},say:'Bubbles blows a tiny bubble at you.'}],
+  seaAnimals:[{pet:'turtle',ang:0},{pet:'lobster',ang:Math.PI}]},
+ {id:'frosty',name:'Frosty Island',x:525,y:70,r:30,biome:'snow',boats:[Math.PI/2,Math.PI,2.4],
   feats:[{k:'museum',museum:'ice',dx:-1,dy:-7}],
   npcs:[
-   {id:'snow',name:'Dr. Snow',e:'👩‍🔬',dx:5,dy:0,lines:['Brrr! Welcome to Frosty Island! It\'s always snowy here. ❄️','Visit the Ice Museum to read more books!','Waddles the penguin wants 4 grapes 🍇 and 6 wins.','They say a giant Kraken sleeps under the ice... 🦑']},
+   {id:'snow',name:'Dr. Snow',e:'👩‍🔬',dx:5,dy:0,lines:['Brrr! Welcome to Frosty Island! It\'s always snowy here. ❄️','Visit the Ice Museum to read more books!','Waddles the penguin wants 4 grapes 🍇 and 6 wins.','They say a giant whale swims in the deep sea near here... 🐳']},
    {id:'frost',name:'Captain Frost',e:'🧔',dx:-7,dy:3,fight:5,lines:['Ho ho! Nobody beats Captain Frost!','My snowballs are extra hard. Battle?']},
   ],
   animals:[{pet:'penguin',dx:3,dy:7,need:{items:{grapes:4},wins:6},say:'Waddles slides over on his tummy.'}],
+  seaAnimals:[{pet:'whale',ang:2.5}],
   boss:{idx:1,dx:0,dy:11},
   garden:{dx:-11,dy:-2,crops:['grapes','grapes','grapes','grapes']}},
- {id:'bunny',name:'Bunny Burrow',x:50,y:210,r:9,biome:'grass',boats:[-Math.PI/2,0],
+ {id:'bunny',name:'Bunny Burrow',x:88,y:367,r:11,biome:'grass',boats:[-Math.PI/2,0],
   npcs:[{id:'gus',name:'Grandpa Gus',e:'👴',dx:2,dy:1,lines:['Hops the bunny is the best hopper around!','She is VERY hungry. She wants 6 carrots 🥕.','Her Carrot Heal helps a lot in tough battles.']}],
   animals:[{pet:'bunny',dx:-2,dy:-2,need:{items:{carrot:6}},say:'Hops wiggles her nose at your backpack.'}],
   garden:{dx:-3,dy:2,crops:['carrot','carrot','carrot']}},
- {id:'volcano',name:'Volcano Island',x:305,y:215,r:18,biome:'volcano',boats:[Math.PI,-Math.PI/2,-2.4],
+ {id:'volcano',name:'Volcano Island',x:534,y:376,r:22,biome:'volcano',boats:[Math.PI,-Math.PI/2,-2.4],
   feats:[{k:'volcano',dx:0,dy:-4}],
   npcs:[
    {id:'ember',name:'Wizard Ember',e:'🧙',dx:-6,dy:3,lines:['Three giant bosses sleep on these islands: the Shadow Dragon, the Frost Kraken and Mega Rex.','Win 7 battles to wake the next boss!','But if you lose battles, Rival Team Thunder gets closer instead!','If the rivals get there first, the boss gets even stronger!','Bosses get ANGRY when they are half beaten. Watch out!']},
-   {id:'tess',name:'Thunder Tess',e:'🥷',dx:6,dy:4,fight:6,lines:['I\'m from Rival Team Thunder! ⚡','We\'re going to reach the bosses before you do!']},
+   {id:'tess',name:'Thunder Tess',e:'🦹',dx:6,dy:4,fight:6,lines:['I\'m from Rival Team Thunder! ⚡','We\'re going to reach the bosses before you do!']},
   ],
+  seaAnimals:[{pet:'shark',ang:Math.PI*0.75}],
   boss:{idx:0,dx:0,dy:3}},
+ // --- new islands
+ {id:'farm',name:'Sunny Farm Land',x:360,y:480,r:50,biome:'farm',boats:[-Math.PI/2,Math.PI,0,-2.4,-0.7],
+  feats:[{k:'house',dx:-8,dy:-10,label:'Barn'}],
+  npcs:[
+   {id:'nell',name:'Farmer Nell',e:'👩‍🌾',dx:0,dy:3,lines:['Welcome to Sunny Farm Land, the BIGGEST island of all! 🚜','All my farm animals want different snacks. Check your backpack to see who wants what!','My garden has every kind of veggie. Help yourself!']},
+   {id:'pip',name:'Farm Kid Pip',e:'👦',dx:8,dy:-2,fight:2,lines:['I practice battling with the goats! Want to try?']},
+   {id:'hank',name:'Grandpa Hank',e:'👨‍🦳',dx:-12,dy:8,fight:4,lines:['Back in my day, we battled uphill both ways!','Let\'s see what you\'ve got, youngster.']},
+  ],
+  animals:[
+   {pet:'pony',dx:-16,dy:-4,need:{items:{carrot:8}},say:'Clover neighs and stamps a hoof.'},
+   {pet:'pig',dx:14,dy:10,need:{items:{pumpkin:3,tomato:3}},say:'Truffles rolls in the mud. Oink!'},
+   {pet:'cow',dx:20,dy:-10,need:{items:{corn:5}},say:'Daisy says MOOOO.'},
+   {pet:'sheep',dx:-22,dy:14,need:{items:{apple:4}},say:'Fluffy says baaa and wiggles.'},
+   {pet:'chicken',dx:6,dy:18,need:{items:{corn:3}},say:'Nugget pecks at the ground.'},
+   {pet:'goat',dx:-8,dy:-20,need:{items:{tomato:5}},say:'Billy tries to eat your shoelace.'},
+  ],
+  garden:{dx:2,dy:7,crops:['carrot','carrot','carrot','carrot','corn','corn','corn','corn','tomato','tomato','tomato','tomato','pumpkin','pumpkin','apple','apple','watermelon','strawberry','grapes','banana']}},
+ {id:'swamp',name:'Misty Swamp',x:110,y:490,r:24,biome:'swamp',boats:[-Math.PI/2,0,-0.8],
+  npcs:[
+   {id:'sue',name:'Swamp Sue',e:'🧓',dx:3,dy:2,lines:['Welcome to Misty Swamp! Mind the mud. 🐸','Snappy the crocodile is a big softie, but only for champions.','Bubba the hippo loves watermelon. Puddles the duck loves corn and strawberries.']},
+   {id:'bart',name:'Bog Boss Bart',e:'👨‍🦲',dx:-6,dy:-4,fight:6,lines:['Nobody gets through my swamp without a battle!','Ready to get muddy?']},
+  ],
+  animals:[
+   {pet:'frog',dx:-3,dy:6,need:{wins:3},say:'Ribbit hops onto a lily pad.'},
+   {pet:'croc',dx:10,dy:-6,need:{items:{watermelon:3},wins:10},say:'Snappy smiles a big toothy smile.'},
+   {pet:'duck',dx:-10,dy:4,need:{items:{corn:3,strawberry:3}},say:'Puddles quacks happily.'},
+   {pet:'hippo',dx:8,dy:8,need:{items:{watermelon:4},wins:7},say:'Bubba blows bubbles in the mud.'},
+  ],
+  garden:{dx:-4,dy:-9,crops:['corn','corn','watermelon','watermelon','strawberry','strawberry']}},
+ {id:'bamboo',name:'Bamboo Isle',x:440,y:330,r:16,biome:'bamboo',boats:[Math.PI,0,Math.PI/2],
+  npcs:[
+   {id:'mei',name:'Master Mei',e:'👩‍🦳',dx:3,dy:2,lines:['Welcome to Bamboo Isle. 🎋 Breathe in... breathe out...','Bao the panda wants 4 pumpkins and 6 wins.']},
+   {id:'kai',name:'Kai',e:'🧒',dx:-5,dy:-3,fight:5,lines:['I train here every day. Battle me!']},
+  ],
+  animals:[{pet:'panda',dx:-2,dy:-6,need:{items:{pumpkin:4},wins:6},say:'Bao munches bamboo and rolls over.'}],
+  garden:{dx:-3,dy:5,crops:['pumpkin','pumpkin','pumpkin','apple']}},
+ {id:'wolf',name:'Wolf Mountain',x:440,y:120,r:18,biome:'mountain',boats:[Math.PI,0,Math.PI/2,-Math.PI/2],
+  npcs:[
+   {id:'mo',name:'Mountain Mo',e:'🧔',dx:3,dy:3,lines:['Welcome to Wolf Mountain! ⛰️','Shadow the wolf only follows strong leaders with 8 wins.','Sky the eagle likes clever friends. Win 5 battles and read 5 books.']},
+   {id:'astro',name:'Astro Jo',e:'👩‍🚀',dx:-6,dy:-2,fight:7,lines:['I\'ve trained on the tallest mountain. My battles are out of this world!']},
+  ],
+  animals:[
+   {pet:'wolf',dx:-4,dy:-8,need:{wins:8},say:'Shadow howls a soft hello. Awooo!'},
+   {pet:'eagle',dx:7,dy:-6,need:{wins:5,books:5},say:'Sky watches you from a high rock.'},
+  ],
+  garden:{dx:-3,dy:5,crops:['apple','apple','apple','grapes']}},
+ {id:'peacock',name:'Peacock Gardens',x:40,y:280,r:12,biome:'sparkle',boats:[0,-Math.PI/2],
+  npcs:[{id:'plume',name:'Lady Plume',e:'👸',dx:2,dy:2,lines:['Welcome to my gardens! 🦚','Plume the peacock wants 8 strawberries and 4 grapes. She is VERY fancy.','Grace the swan just loves grapes.']}],
+  animals:[
+   {pet:'peacock',dx:-3,dy:-3,need:{items:{strawberry:8,grapes:4}},say:'Plume spreads her rainbow tail.'},
+   {pet:'swan',dx:4,dy:-4,need:{items:{grapes:5}},say:'Grace bows her long neck.'},
+  ],
+  garden:{dx:-3,dy:4,crops:['strawberry','strawberry','strawberry','grapes','grapes']}},
 ];
 
 const MUSEUMS={
@@ -369,6 +486,7 @@ const MUSEUMS={
  ]},
 };
 
+
 const WEATHER={sunny:{e:'☀️',n:'Sunny'},cloudy:{e:'☁️',n:'Cloudy'},rain:{e:'🌧️',n:'Rainy'},storm:{e:'⛈️',n:'Thunderstorm'},snow:{e:'🌨️',n:'Snowy'},fog:{e:'🌫️',n:'Foggy'},rainbow:{e:'🌈',n:'Rainbow'},windy:{e:'🍃',n:'Windy'}};
 const BIOME={
  grass:{land:['#7fd46a','#74cc5f'],tree:'🌳',dens:.07,flowers:['🌷','🌼','🌻'],sky:['#8fd3ff','#dff5ff'],ground:'#7fd46a'},
@@ -380,6 +498,10 @@ const BIOME={
  forest:{land:['#5fae4f','#56a347'],tree:'🌲',dens:.12,flowers:['🍄','🌿','🍂'],sky:['#a6dcb0','#eaf7e6'],ground:'#56a347'},
  jungle:{land:['#3fa34d','#389745'],tree:'🌴',dens:.12,flowers:['🌺','🌿','🌺'],sky:['#7fd6a0','#e3f9e0'],ground:'#389745'},
  outback:{land:['#d98b4a','#cf7f40'],tree:'🌳',dens:.04,flowers:['🌾','🌵','🌾'],sky:['#ffb27a','#ffe9cf'],ground:'#cf7f40'},
+ farm:{land:['#8edc6a','#86d362'],tree:'🌳',dens:.03,flowers:['🌻','🌼','🌷'],sky:['#9fdcff','#f0fbff'],ground:'#86d362'},
+ swamp:{land:['#6f8f4a','#678543'],tree:'🌳',dens:.1,flowers:['🍄','🌿','🌾'],sky:['#9fb89a','#e2ecd8'],ground:'#678543'},
+ bamboo:{land:['#9fdc7a','#95d270'],tree:'🎋',dens:.14,flowers:['🌿','🌸','🌿'],sky:['#c5f0b0','#f3fdea'],ground:'#95d270'},
+ mountain:{land:['#9aa79a','#8e9b8e'],tree:'🌲',dens:.09,flowers:['🌼','🍄','🌿'],sky:['#b9d3e6','#f1f7fb'],ground:'#8e9b8e'},
 };
 const SAND='#f3dc9b',SAND2='#ecd290',SHALLOW='#5fd3ea',DEEP='#2a8fd6';
 
@@ -389,7 +511,7 @@ const terr=new Uint8Array(N),isl=new Int8Array(N).fill(-1),deco=new Uint8Array(N
 ISLANDS.forEach(I=>{I.s1=srng()*6.28;I.s2=srng()*6.28;I.s3=srng()*6.28;});
 for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){
   let best=9,bi=-1;
-  for(let k=0;k<ISLANDS.length;k++){const I=ISLANDS[k];const dx=x+.5-I.x,dy=y+.5-I.y,d=Math.hypot(dx,dy);if(d>I.r*1.9)continue;const a=Math.atan2(dy,dx);const re=I.r*(1+.15*Math.sin(3*a+I.s1)+.08*Math.sin(5*a+I.s2)+.05*Math.sin(9*a+I.s3));const nd=d/re;if(nd<best){best=nd;bi=k;}}
+  for(let k=0;k<ISLANDS.length;k++){const I=ISLANDS[k];const dx=x+.5-I.x,dy=y+.5-I.y;if(Math.abs(dx)>I.r*1.9||Math.abs(dy)>I.r*1.9)continue;const d=Math.hypot(dx,dy);if(d>I.r*1.9)continue;const a=Math.atan2(dy,dx);const re=I.r*(1+.15*Math.sin(3*a+I.s1)+.08*Math.sin(5*a+I.s2)+.05*Math.sin(9*a+I.s3));const nd=d/re;if(nd<best){best=nd;bi=k;}}
   const i=y*MW+x;terr[i]=best<.82?3:best<1?2:best<1.35?1:0;if(terr[i]>0)isl[i]=bi;dvar[i]=hash(x,y)%97;
 }
 function forceLand(tx,ty,rad,k){for(let y=ty-rad;y<=ty+rad;y++)for(let x=tx-rad;x<=tx+rad;x++){if(x<0||y<0||x>=MW||y>=MH)continue;const i=y*MW+x;if(terr[i]<3){terr[i]=3;isl[i]=k;}}}
@@ -424,6 +546,42 @@ BOSSES.forEach(b=>{if(b.island===undefined)return;const I=ISLANDS[b.island];carv
 // boats
 ISLANDS.forEach((I,k)=>{(I.boats||[]).forEach(a=>{for(let s=0;s<I.r*2.5;s+=.5){const tx=Math.floor(I.x+Math.cos(a)*s),ty=Math.floor(I.y+Math.sin(a)*s);if(tx<0||ty<0||tx>=MW||ty>=MH)break;const i=ty*MW+tx;if(terr[i]<=1){BOATS.push({x:(tx+.5)*T,y:(ty+.5)*T,face:Math.cos(a)>0?1:-1,home:k});carve(I.x,I.y+1,tx,ty);break;}}});});
 
+// ================= under the sea =================
+const tileOk=(tx,ty)=>tx>=1&&ty>=1&&tx<MW-1&&ty<MH-1;
+// a spot in open water a little way out from an island, in the given direction
+function seaSpot(I,ang,extra=4){let last=null;for(let s=I.r*.5;s<I.r*3;s+=.5){const tx=Math.floor(I.x+Math.cos(ang)*s),ty=Math.floor(I.y+Math.sin(ang)*s);if(!tileOk(tx,ty))break;if(terr[ty*MW+tx]===0){const ex=Math.floor(tx+Math.cos(ang)*extra),ey=Math.floor(ty+Math.sin(ang)*extra);if(tileOk(ex,ey)&&terr[ey*MW+ex]===0)return{tx:ex,ty:ey};return{tx,ty};}last={tx,ty};}return last;}
+const SEA_NEEDS={turtle:{gems:3},crab:{gems:4},puffer:{gems:5,wins:2},lobster:{gems:6},dolphin:{gems:8,wins:4},shark:{gems:12,wins:8},whale:{gems:18,wins:11}};
+const SEA_SAY={turtle:'Shelly swims a slow, happy circle around you.',crab:'Pinchy waves a claw at you.',puffer:'Puffy puffs up, then un-puffs. Hi!',lobster:'Snips clicks his claws.',dolphin:'Splash does a flip!',shark:'Finn smiles. He only eats veggies, promise!',whale:'Big Blue sings a deep, gentle song.'};
+ISLANDS.forEach((I,k)=>(I.seaAnimals||[]).forEach(a=>{const p=seaSpot(I,a.ang);ANIMALS.push({...a,tx:p.tx,ty:p.ty,x:(p.tx+.5)*T,y:(p.ty+.5)*T,island:k,sea:true,need:SEA_NEEDS[a.pet],say:SEA_SAY[a.pet]});}));
+const SEA_SPECIES=[
+ {e:'🐟',n:'Fish',w:30,fact:'Fish have lived in the oceans for more than 500 million years, way before dinosaurs!'},
+ {e:'🐠',n:'Tropical Fish',w:26,fact:'Tropical fish have bright colors that help them hide in colorful coral reefs.'},
+ {e:'🐡',n:'Pufferfish',w:8,fact:'A pufferfish can blow itself up like a spiky balloon to scare others away.'},
+ {e:'🦈',n:'Shark',w:5,fact:'Sharks were around even before the dinosaurs! They lose and grow back thousands of teeth.'},
+ {e:'🐙',n:'Octopus',w:6,fact:'An octopus has three hearts and blue blood!'},
+ {e:'🦑',n:'Squid',w:6,fact:'A squid squirts a cloud of ink so it can zoom away.'},
+ {e:'🦀',n:'Crab',w:10,crawl:1,fact:'Most crabs walk sideways!'},
+ {e:'🦞',n:'Lobster',w:6,crawl:1,fact:'Lobsters have tiny hairs on their legs that help them taste and smell.'},
+ {e:'🦐',n:'Shrimp',w:10,fact:'Some shrimp clean other fish, like a tiny car wash!'},
+ {e:'🐢',n:'Sea Turtle',w:6,fact:'Sea turtles can swim across whole oceans and come back to the beach where they hatched.'},
+ {e:'🐬',n:'Dolphin',w:5,fact:'Dolphins talk to each other with clicks and whistles.'},
+ {e:'🐳',n:'Whale',w:2,big:1,fact:'Whales breathe air through a blowhole on top of their head.'},
+ {e:'🐋',n:'Humpback Whale',w:2,big:1,fact:'Humpback whales sing long songs that can travel far through the ocean.'},
+ {e:'🐚',n:'Seashell',w:8,still:1,fact:'Seashells were once the homes of sea snails and clams.'},
+ {e:'⭐',n:'Starfish',w:7,still:1,fact:'A starfish (sea star) can grow back a lost arm!'},
+];
+const SEA_LIFE=[],CHESTS=[];
+{const tot=SEA_SPECIES.reduce((a,s)=>a+s.w,0);let made=0,tries=0;
+ while(made<3000&&tries<60000){tries++;const tx=1+Math.floor(srng()*(MW-2)),ty=1+Math.floor(srng()*(MH-2)),i=ty*MW+tx;if(terr[i]>1)continue;
+   let r=srng()*tot,sp=SEA_SPECIES[0];for(const s of SEA_SPECIES){r-=s.w;if(r<=0){sp=s;break;}}
+   if((sp.crawl||sp.still)&&terr[i]!==1&&srng()<.6)continue;
+   const x=(tx+.5)*T,y=(ty+.5)*T;let rad=sp.still?0:sp.crawl?20+srng()*30:sp.big?120+srng()*120:40+srng()*120;
+   // shrink the swim circle until it stays in the water
+   for(let k=0;k<6&&rad>0;k++){let ok=true;for(let a=0;a<8;a++){const px=x+Math.cos(a*.785)*rad,py=y+Math.sin(a*.785)*rad*.6,j=Math.floor(py/T)*MW+Math.floor(px/T);if(j<0||j>=N||terr[j]>1){ok=false;break;}}if(ok)break;rad*=.5;}
+   const school=sp.big||sp.still||sp.crawl?1:2+Math.floor(srng()*5),ph=srng()*6.28,v=(sp.big?.15:sp.crawl?.3:.4+srng()*.5)*(srng()<.5?-1:1);
+   for(let m=0;m<school;m++){const ox=m?(srng()-.5)*60:0,oy=m?(srng()-.5)*40:0;SEA_LIFE.push({sp,x:x+ox,y:y+oy,hx:x+ox,hy:y+oy,r:rad,ph:ph+m*.12,v,face:1});}made++;}
+ for(let k=0,t=0;k<60&&t<5000;t++){const tx=2+Math.floor(srng()*(MW-4)),ty=2+Math.floor(srng()*(MH-4));if(terr[ty*MW+tx]!==0)continue;CHESTS.push({id:k,x:(tx+.5)*T,y:(ty+.5)*T});k++;}}
+
 // minimap image
 const mm=document.createElement('canvas');mm.width=MW;mm.height=MH;
 {const g=mm.getContext('2d'),img=g.createImageData(MW,MH);const hex=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
@@ -432,10 +590,10 @@ const mm=document.createElement('canvas');mm.width=MW;mm.height=MH;
 
 // ================= state =================
 const SAVE_KEY='petIslandsSave_v2';
-function defaultState(){return{name:'Addison',char:'👧',pets:['dog'],inv:{},wins:0,losses:0,race:{you:0,rival:0},bossAwake:false,bossBonus:0,bossBeaten:0,maxE:100,px:ISLANDS[0].cx,py:ISLANDS[0].cy,boats:null,talked:{},seen:{},read:{},team:['dog'],intro:false};}
+function defaultState(){return{name:'Addison',char:'👧',pets:['dog'],inv:{},wins:0,losses:0,race:{you:0,rival:0},bossAwake:false,bossBonus:0,bossBeaten:0,maxE:100,px:ISLANDS[0].cx,py:ISLANDS[0].cy,boats:null,talked:{},seen:{},read:{},team:['dog'],gems:0,chests:{},book:{},mapv:3,intro:false};}
 function refreshBoss(){BOSS=BOSSES[(S.bossBeaten||0)%BOSSES.length];}
 let S=defaultState();
-function save(){try{S.px=P.x;S.py=P.y;if(P.mode!=='walk'&&scene==='world'){/* save on land spot near if flying/boat */}S.boats=BOATS.map(b=>[Math.round(b.x),Math.round(b.y)]);S.mode=P.mode==='boat'?'boat':P.mode;S.boatIdx=P.boat?BOATS.indexOf(P.boat):-1;localStorage.setItem(SAVE_KEY,JSON.stringify(S));}catch(e){}}
+function save(){try{S.px=P.x;S.py=P.y;if(P.mode!=='walk'&&scene==='world'){/* save on land spot near if flying/boat */}S.boats=BOATS.map(b=>[Math.round(b.x),Math.round(b.y)]);const bt=P.boat||P.diveBoat;S.mode=(P.mode==='boat'||P.mode==='swim')?'boat':P.mode;S.boatIdx=bt?BOATS.indexOf(bt):-1;localStorage.setItem(SAVE_KEY,JSON.stringify(S));}catch(e){}}
 function loadSave(){try{const s=localStorage.getItem(SAVE_KEY);if(!s)return null;return JSON.parse(s);}catch(e){return null;}}
 
 const P={x:0,y:0,face:1,mode:'walk',boat:null,alt:0,trail:[],moving:false,step:0};
@@ -443,7 +601,8 @@ let pets=[]; // {id,x,y,face}
 let scene='title',curIsland=-1,lastIsland=-2,curMuseum=null,museumDoor=null;
 let nearAct=null;
 
-function syncPets(){pets=S.pets.map((id,i)=>{const old=pets.find(p=>p.id===id);return old||{id,x:P.x-10-i*6,y:P.y+8,face:1};});}
+const FOLLOW_MAX=10;
+function syncPets(){const t=teamPets();const ids=[...t,...S.pets.filter(x=>!t.includes(x))].slice(0,FOLLOW_MAX);pets=ids.map((id,i)=>{const old=pets.find(p=>p.id===id);return old||{id,x:P.x-10-i*6,y:P.y+8,face:1};});}
 function resetTrail(){P.trail=[];for(let i=0;i<240;i++)P.trail.push({x:P.x,y:P.y});pets.forEach((p,i)=>{p.x=P.x-12*(i+1)*0.5;p.y=P.y+6;});}
 
 // ================= UI: toasts, dialog, overlay =================
@@ -471,13 +630,14 @@ function isLandWalk(px,py){const i=tileIdx(px,py);return i>=0&&terr[i]>=2&&!soli
 function isWater(px,py){const i=tileIdx(px,py);return i>=0&&terr[i]<=1;}
 const RW=18,RH=12;
 function museumBlocked(px,py){const tx=Math.floor(px/T),ty=Math.floor(py/T);if(tx<1||tx>RW-2||ty<2||ty>RH-2)return true;return MUSEUMS[curMuseum].exhibits.some(e=>e.tx===tx&&e.ty===ty);}
-function canMove(nx,ny){if(scene==='museum')return !museumBlocked(nx,ny);if(P.mode==='fly')return nx>T&&ny>T&&nx<(MW-1)*T&&ny<(MH-1)*T;if(P.mode==='boat')return isWater(nx,ny);return isLandWalk(nx,ny);}
+function canMove(nx,ny){if(scene==='museum')return !museumBlocked(nx,ny);if(scene==='sea')return isWater(nx,ny);if(P.mode==='fly')return nx>T&&ny>T&&nx<(MW-1)*T&&ny<(MH-1)*T;if(P.mode==='boat')return isWater(nx,ny);return isLandWalk(nx,ny);}
 function hasPet(id){return S.pets.includes(id);}
 function nearestBoat(maxD){let b=null,bd=maxD;BOATS.forEach(o=>{if(o===P.boat)return;const d=dist(o.x,o.y,P.x,P.y);if(d<bd){bd=d;b=o;}});return b;}
 function findLandNear(){for(const r of [1,1.4,1.9]){for(let a=0;a<16;a++){const an=a/16*Math.PI*2;const x=P.x+Math.cos(an)*r*T,y=P.y+Math.sin(an)*r*T;if(isLandWalk(x,y))return{x,y};}}return null;}
 
 function findAct(){
   let best=null,bd=1e9;const take=(d,o)=>{if(d<bd){bd=d;best=o;}};
+  if(scene==='sea'){findSeaAct(take);return best;}
   if(scene==='museum'){
     MUSEUMS[curMuseum].exhibits.forEach(e=>{const x=(e.tx+.5)*T,y=(e.ty+.5)*T,d=dist(x,y,P.x,P.y);if(d<52)take(d,{type:'exhibit',o:e,x,y:y-10,label:(e.book?'Read ':'Look at ')+e.n});});
     const dx=(RW/2)*T,dy=(RH-1)*T,d=dist(dx,dy,P.x,P.y);if(d<46)take(d,{type:'exit',x:dx,y:dy-10,label:'Leave the museum'});
@@ -485,7 +645,7 @@ function findAct(){
   }
   if(P.mode==='walk'){
     NPCS.forEach(n=>{const d=dist(n.x,n.y,P.x,P.y);if(d<54)take(d,{type:'npc',o:n,x:n.x,y:n.y-14,label:'Talk to '+n.name});});
-    ANIMALS.forEach(a=>{if(hasPet(a.pet))return;const d=dist(a.x,a.y,P.x,P.y);if(d<54)take(d,{type:'animal',o:a,x:a.x,y:a.y-14,label:'Meet '+PETS[a.pet].short});});
+    ANIMALS.forEach(a=>{if(a.sea||hasPet(a.pet))return;const d=dist(a.x,a.y,P.x,P.y);if(d<54)take(d,{type:'animal',o:a,x:a.x,y:a.y-14,label:'Meet '+PETS[a.pet].short});});
     BUILDINGS.forEach(b=>{if(!b.door)return;const d=dist(b.door.x,b.door.y,P.x,P.y);if(d<44)take(d,{type:b.k,o:b,x:b.door.x,y:b.door.y-20,label:b.k==='museum'?'Go into '+MUSEUMS[b.museum].name:'Take a nap at home'});});
     if(S.bossAwake&&BOSS){const d=dist(BOSS.x,BOSS.y,P.x,P.y);if(d<70)take(d-20,{type:'boss',x:BOSS.x,y:BOSS.y-36,label:'Face '+BOSS.name+'!'});}
     BOATS.forEach(b=>{const d=dist(b.x,b.y,P.x,P.y);if(d<62)take(d+6,{type:'boat',o:b,x:b.x,y:b.y-26,label:'Get in the boat ⛵'});});
@@ -497,18 +657,20 @@ function findAct(){
 }
 
 function doAct(a){
-  if(!a){if(P.mode==='boat')toast('Sail closer to land to hop off!');return;}
+  if(!a){if(scene==='sea')surface();else if(P.mode==='boat')dive();return;}
   switch(a.type){
     case 'npc':talkNPC(a.o);break;
     case 'animal':meetAnimal(a.o);break;
     case 'museum':enterMuseum(a.o);break;
     case 'house':S.seen.nap=1;save();say({name:'Home Sweet Home',emoji:'🏠',text:'You and your pets took a cozy nap. Zzz... 😴 Your game is saved!'});break;
     case 'boss':meetBoss();break;
-    case 'boat':P.mode='boat';P.boat=a.o;P.x=a.o.x;P.y=a.o.y;SFX.boat();toast('⛵ All aboard! Sail on the water. Press E near land to hop off.');break;
+    case 'boat':P.mode='boat';P.boat=a.o;P.x=a.o.x;P.y=a.o.y;SFX.boat();toast(isTouch()?'⛵ All aboard! Out at sea, tap 🌊 Dive to go underwater!':'⛵ All aboard! Out at sea, press E or Q to dive underwater!');break;
     case 'land':P.mode='walk';P.boat=null;P.x=a.o.x;P.y=a.o.y;resetTrail();toast('🏝️ Land ho!');break;
     case 'plant':pickPlant(a.o);break;
     case 'exhibit':readExhibit(a.o);break;
     case 'exit':exitMuseum();break;
+    case 'chest':openChest(a.o);break;
+    case 'creature':lookCreature(a.o);break;
   }
 }
 function pickPlant(p){if(!p.ripe)return;p.ripe=false;p.t=25;S.inv[p.type]=(S.inv[p.type]||0)+1;SFX.pick();toast(`${CROPS[p.type].e} +1 ${CROPS[p.type].n}!`,1500);hudDirty=true;}
@@ -523,16 +685,17 @@ function talkNPC(n){
 }
 function needStatus(need){const parts=[];let ok=true;
   if(need.items)for(const k in need.items){const have=S.inv[k]||0,n=need.items[k];if(have<n)ok=false;parts.push(`${have>=n?'✅':'⬜'} ${CROPS[k].e} ${Math.min(have,n)}/${n} ${CROPS[k].n.toLowerCase()}`);}
+  if(need.gems){const g=S.gems||0;if(g<need.gems)ok=false;parts.push(`${g>=need.gems?'✅':'⬜'} 💎 ${Math.min(g,need.gems)}/${need.gems} sea gems`);}
   if(need.wins){if(S.wins<need.wins)ok=false;parts.push(`${S.wins>=need.wins?'✅':'⬜'} ⚔️ ${Math.min(S.wins,need.wins)}/${need.wins} battles won`);}
   if(need.books){const r=Object.keys(S.read||{}).length;if(r<need.books)ok=false;parts.push(`${r>=need.books?'✅':'⬜'} 📖 ${Math.min(r,need.books)}/${need.books} books read`);}
   return{ok,text:parts.join(' · ')};}
 function meetAnimal(a){
   S.talked['pet_'+a.pet]=1;const pd=PETS[a.pet];if(!a.need)return joinPet(a.pet);const st=needStatus(a.need);
-  if(st.ok){const gives=a.need.items?Object.keys(a.need.items).map(k=>`${a.need.items[k]} ${CROPS[k].e}`).join(' + '):'';
-    say({name:pd.name,emoji:pd.e,text:`${pd.short} trusts you now! ${gives?`It would love ${gives}.`:''} Ready to be friends?`,choices:[{label:gives?`Give ${gives}`:'Be friends! 💕',fn:()=>{if(a.need.items)for(const k in a.need.items)S.inv[k]-=a.need.items[k];joinPet(a.pet);}},{label:'Not yet',fn:()=>{}}]});}
+  if(st.ok){const g=[];if(a.need.items)for(const k in a.need.items)g.push(`${a.need.items[k]} ${CROPS[k].e}`);if(a.need.gems)g.push(`${a.need.gems} 💎`);const gives=g.join(' + ');
+    say({name:pd.name,emoji:pd.e,text:`${pd.short} trusts you now! ${gives?`It would love ${gives}.`:''} Ready to be friends?`,choices:[{label:gives?`Give ${gives}`:'Be friends! 💕',fn:()=>{if(a.need.items)for(const k in a.need.items)S.inv[k]-=a.need.items[k];if(a.need.gems)S.gems-=a.need.gems;joinPet(a.pet);}},{label:'Not yet',fn:()=>{}}]});}
   else say({name:pd.name,emoji:pd.e,text:`${a.say||''} ${pd.short} isn't ready to join you yet. It needs: ${st.text}`});
 }
-function addPet(id){if(hasPet(id))return;S.pets.push(id);S.team=S.team||[];if(S.team.length<TEAM_MAX)S.team.push(id);syncPets();const p=pets[pets.length-1];if(p){p.x=P.x;p.y=P.y;}}
+function addPet(id){if(hasPet(id))return;S.pets.push(id);S.team=S.team||[];if(S.team.length<TEAM_MAX)S.team.push(id);syncPets();const p=pets.find(q=>q.id===id);if(p){p.x=P.x;p.y=P.y;}}
 function joinPet(id){if(hasPet(id))return;addPet(id);SFX.unlock();hudDirty=true;save();
   const pd=PETS[id];toast(`🎉 ${pd.name} joined your team!`,3200);
   say({name:pd.name,emoji:pd.e,text:`Yay! ${pd.name} is your new pet! Power: ${pd.power}. ${pd.desc}${id==='cheetah'?' Zoom also makes you walk faster!':''} ${S.team.includes(id)?'It is on your battle team!':'Your battle team is full. Open the backpack 🎒 to swap pets.'}`});}
@@ -551,7 +714,7 @@ function readExhibit(e){
 }
 
 function toggleFly(){
-  if(scene!=='world')return toast("You can't fly indoors! 🏛️");
+  if(scene==='sea')return toast("You can't fly underwater! Tap ⬆️ Up to go back to your boat.");if(scene!=='world')return toast("You can't fly indoors! 🏛️");
   if(P.mode!=='fly'){P.boat=null;P.mode='fly';SFX.fly();toast('🕊️ Whee! You are flying! Press F again to land.');return;}
   if(isLandWalk(P.x,P.y)){P.mode='walk';toast('Landed! 👣');resetTrail();return;}
   const b=nearestBoat(80);if(b){P.mode='boat';P.boat=b;P.x=b.x;P.y=b.y;toast('Landed in a boat ⛵');return;}
@@ -565,7 +728,7 @@ let WP=[],wpType='';
 function pickWeather(){const opts=['sunny','sunny','cloudy','rain','storm','snow','fog','windy'];let n;
   if((Wt.type==='rain'||Wt.type==='storm')&&Math.random()<.6)n='rainbow';else{do n=pick(opts);while(n===Wt.type);}
   Wt.type=n;Wt.t=rand(35,60);if(scene!=='title')toast(`${WEATHER[n].e} The weather is now ${WEATHER[n].n.toLowerCase()}!`);hudDirty=true;}
-function effWeather(){if(scene==='museum')return 'inside';const I=ISLANDS[curIsland];if(I&&I.biome==='snow'&&['rain','storm','sunny','cloudy','windy'].includes(Wt.type))return 'snow';return Wt.type;}
+function effWeather(){if(scene==='museum')return 'inside';if(scene==='sea')return 'sea';const I=ISLANDS[curIsland];if(I&&I.biome==='snow'&&['rain','storm','sunny','cloudy','windy'].includes(Wt.type))return 'snow';return Wt.type;}
 function weatherUpdate(dt){
   Wt.t-=dt;if(Wt.t<=0)pickWeather();
   const ew=effWeather();if(ew!==wpType){WP=[];wpType=ew;}
@@ -600,7 +763,7 @@ function drawWeather(){
 // ================= ambient critters =================
 const CRITTERS=[];
 ISLANDS.forEach((I,k)=>{for(let j=0;j<2;j++)CRITTERS.push({e:I.biome==='snow'?'🐦':'🦋',x:I.cx+rand(-80,80),y:I.cy+rand(-80,80),hx:I.cx,hy:I.cy,r:I.r*T*.5,ph:Math.random()*6,air:true});});
-for(let j=0;j<28;j++){let x,y,tries=0;do{x=rand(5,MW-5)*T;y=rand(5,MH-5)*T;tries++;}while(terr[tileIdx(x,y)]!==0&&tries<50);CRITTERS.push({e:pick(['🐬','🐟','🐢','🐳']),x,y,hx:x,hy:y,r:120,ph:Math.random()*6,air:false});}
+for(let j=0;j<70;j++){let x,y,tries=0;do{x=rand(5,MW-5)*T;y=rand(5,MH-5)*T;tries++;}while(terr[tileIdx(x,y)]!==0&&tries<50);CRITTERS.push({e:pick(['🐬','🐟','🐢','🐳']),x,y,hx:x,hy:y,r:120,ph:Math.random()*6,air:false});}
 
 // ================= input =================
 const keys={};
@@ -616,6 +779,7 @@ addEventListener('keydown',e=>{
   if(scene==='battle'){if(/^[1-9]$/.test(k)){const b=$('bbtns').children[+k-1];if(b&&!b.disabled)b.click();}else if(k==='enter'||k===' '){const b=$('bbtns').querySelector('.main');if(b&&!b.disabled)b.click();}return;}
   if(k==='e'||k===' '||k==='enter')doAct(nearAct);
   else if(k==='f')toggleFly();
+  else if(k==='q'){if(scene==='sea')surface();else dive();}
   else if(k==='i'||k==='b')openBag();
   else if(k==='m')openMap();
   else if(k==='h'||k==='?')openHelp();
@@ -629,9 +793,12 @@ function tappedThing(w){
   const near=(x,y,r)=>dist(x,y,w.x,w.y)<r;
   if(scene==='museum'){for(const e of MUSEUMS[curMuseum].exhibits)if(near((e.tx+.5)*T,(e.ty+.5)*T-8,30))return{o:e,x:(e.tx+.5)*T,y:(e.ty+.5)*T};
     if(near(RW/2*T,(RH-1)*T,36))return{type:'exit',x:RW/2*T,y:(RH-1.5)*T};return null;}
+  if(scene==='sea'){for(const a of ANIMALS)if(a.sea&&!hasPet(a.pet)&&near(a.x,a.y-6,34))return{o:a,x:a.x,y:a.y};
+    for(const c of CHESTS)if(!S.chests[c.id]&&near(c.x,c.y,30))return{o:c,x:c.x,y:c.y};
+    for(const c of SEA_LIFE)if(near(c.x,c.y,c.sp.big?50:26))return{o:c,x:c.x,y:c.y};return null;}
   if(P.mode!=='walk')return null;
   for(const n of NPCS)if(near(n.x,n.y-6,30))return{o:n,x:n.x,y:n.y};
-  for(const a of ANIMALS)if(!hasPet(a.pet)&&near(a.x,a.y-6,30))return{o:a,x:a.x,y:a.y};
+  for(const a of ANIMALS)if(!a.sea&&!hasPet(a.pet)&&near(a.x,a.y-6,30))return{o:a,x:a.x,y:a.y};
   for(const b of BUILDINGS)if(b.door&&near(b.x,b.y-14,52))return{o:b,x:b.door.x,y:b.door.y};
   if(S.bossAwake&&BOSS&&near(BOSS.x,BOSS.y-20,44))return{type:'boss',x:BOSS.x,y:BOSS.y};
   for(const b of BOATS)if(b!==P.boat&&near(b.x,b.y-6,32))return{o:b,x:b.x,y:b.y};
@@ -641,7 +808,7 @@ function tappedThing(w){
 const sameAct=(th,a)=>a&&th&&((th.o&&a.o===th.o)||(th.type&&a.type===th.type));
 cv.addEventListener('pointerdown',e=>{
   unlockAudio();
-  if(scene!=='world'&&scene!=='museum')return;
+  if(scene!=='world'&&scene!=='museum'&&scene!=='sea')return;
   if(dlg){if(!dlg.choices||dlg.choices.length===1)chooseDlg(0);return;}
   if(overlayOpen())return;
   const w=screenToWorld(e.clientX,e.clientY);
@@ -655,10 +822,11 @@ cv.addEventListener('pointermove',e=>{if(dest&&dest.hold&&dest.id===e.pointerId)
 const relDest=e=>{if(dest&&dest.id===e.pointerId)dest.hold=false;};
 cv.addEventListener('pointerup',relDest);cv.addEventListener('pointercancel',relDest);
 function unlockAudio(){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();}catch(e){}}
-const ACT_BTN={npc:['💬','Talk'],animal:['❤️','Meet'],boat:['⛵','Sail'],land:['🏝️','Hop off'],plant:['🧺','Pick'],museum:['🚪','Go in'],house:['😴','Nap'],boss:['⚔️','Fight'],exhibit:['👀','Look'],exit:['🚪','Exit']};
+const ACT_BTN={chest:['💎','Open'],creature:['👀','Look'],npc:['💬','Talk'],animal:['❤️','Meet'],boat:['⛵','Sail'],land:['🏝️','Hop off'],plant:['🧺','Pick'],museum:['🚪','Go in'],house:['😴','Nap'],boss:['⚔️','Fight'],exhibit:['👀','Look'],exit:['🚪','Exit']};
 let lastBtnKey='';
-function updateTouchBtns(){const a=nearAct&&ACT_BTN[nearAct.type];const fl=P.mode==='fly';const key=(a?nearAct.type:'none')+fl;if(key===lastBtnKey)return;lastBtnKey=key;
-  $('tE').innerHTML=a?`${a[0]}<br><small>${a[1]}</small>`:'✋<br><small>Use</small>';$('tE').classList.toggle('ready',!!a);
+function updateTouchBtns(){const a=nearAct&&ACT_BTN[nearAct.type];const fl=P.mode==='fly';const key=(a?nearAct.type:'none')+fl+scene+P.mode;if(key===lastBtnKey)return;lastBtnKey=key;
+  const idle=scene==='sea'?['⬆️','Up']:P.mode==='boat'?['🌊','Dive']:null;
+  $('tE').innerHTML=a?`${a[0]}<br><small>${a[1]}</small>`:idle?`${idle[0]}<br><small>${idle[1]}</small>`:'✋<br><small>Use</small>';$('tE').classList.toggle('ready',!!(a||idle));
   $('tF').innerHTML=fl?'🛬<br><small>Land</small>':'🕊️<br><small>Fly</small>';}
 // touch
 function isTouch(){return ('ontouchstart' in window)||navigator.maxTouchPoints>0;}
@@ -679,12 +847,12 @@ function openBag(){
   const team=teamPets();
   let h='<h2>🎒 Backpack</h2>';
   h+=`<h3>⭐ Boss Race</h3><div>You: <b>${S.race.you}/${RACE}</b> wins &nbsp; | &nbsp; Rival Team Thunder: <b>${S.race.rival}/${RACE}</b>. ${S.bossAwake?`${BOSS.e} <b>${BOSS.name} is awake on ${ISLANDS[BOSS.island].name}!</b>`:`Win ${RACE} battles to wake the next boss: ${BOSS.name} ${BOSS.e}`}</div>`;
-  h+=`<div style="margin-top:4px">Battles won: <b>${S.wins}</b> · lost: <b>${S.losses}</b> · Max energy: <b>${S.maxE}</b> · Books read: <b>${Object.keys(S.read||{}).length}</b>${S.bossBeaten?` · Bosses beaten: <b>${S.bossBeaten}</b> 🏆`:''}</div>`;
+  h+=`<div style="margin-top:4px">Battles won: <b>${S.wins}</b> · lost: <b>${S.losses}</b> · Max energy: <b>${S.maxE}</b> · Books read: <b>${Object.keys(S.read||{}).length}</b> · Sea gems: <b>${S.gems||0}</b> 💎 · Sea Book: <b>${Object.keys(S.book||{}).length}/${SEA_SPECIES.length}</b>${S.bossBeaten?` · Bosses beaten: <b>${S.bossBeaten}</b> 🏆`:''}</div>`;
   h+=`<h3>⚔️ Battle Team (${team.length}/${TEAM_MAX})</h3><div style="font-size:14px">Only your team fights in battles. Tap a pet's button below to add it or take it out.</div>`;
   h+=`<h3>🐾 Pets (${S.pets.length}/${PET_ORDER.length})</h3>`;
   PET_ORDER.forEach(id=>{const p=PETS[id];
     if(hasPet(id)){const on=team.includes(id);h+=`<div class="petCard"><div class="pe">${p.e}${p.badge||''}</div><div style="flex:1"><b>${p.name}</b><br>⚡ <b>${p.power}</b>: ${p.desc}<br><i>${p.world}</i></div><button class="choice ${on?'':'alt'}" data-team="${id}">${on?'⭐ On team':'+ Add to team'}</button></div>`;}
-    else{const a=ANIMALS.find(x=>x.pet===id);const hint=a?`Lives on ${ISLANDS[a.island].name}. Needs: ${a.need?needStatus(a.need).text:'nothing!'}`:BOSS_PET_HINT[id];
+    else{const a=ANIMALS.find(x=>x.pet===id);const hint=a?`${a.sea?'Lives under the sea near':'Lives on'} ${ISLANDS[a.island].name}. Needs: ${a.need?needStatus(a.need).text:'nothing!'}`:BOSS_PET_HINT[id];
       h+=`<div class="petCard locked"><div class="pe">${a&&S.talked['pet_'+id]?p.e:'❓'}</div><div><b>${a&&S.talked['pet_'+id]?p.name:'Secret animal'}</b><br>${hint}</div></div>`;}});
   h+='<h3>🧺 Snacks</h3><div class="items">';const items=Object.keys(CROPS).filter(k=>S.inv[k]>0);
   h+=items.length?items.map(k=>`<span>${CROPS[k].e} ${S.inv[k]} <small>(+${CROPS[k].heal} energy)</small></span>`).join(''):'<i>Empty! Walk over ripe veggies in a garden to pick them.</i>';
@@ -693,19 +861,19 @@ function openBag(){
   $('ovBox').querySelectorAll('[data-team]').forEach(b=>b.onclick=()=>{const id=b.dataset.team;let t=teamPets();
     if(t.includes(id)){if(t.length===1){toast('You need at least 1 pet on your team!');return;}t=t.filter(x=>x!==id);}
     else{if(t.length>=TEAM_MAX){toast(`Your team is full (${TEAM_MAX}). Take a pet out first!`);return;}t.push(id);}
-    S.team=t;save();openBag();});
+    S.team=t;syncPets();resetTrail();hudDirty=true;save();openBag();});
   $('resetBtn').onclick=()=>{const b=$('resetBtn');if(b.dataset.sure){try{localStorage.removeItem(SAVE_KEY);}catch(e){}location.reload();}else{b.dataset.sure=1;b.textContent='Tap again to really erase everything';b.style.background='var(--bad)';b.style.color='#fff';}};
 }
 function openMap(){
-  openOverlay('<h2>🗺️ Map of Pet Islands</h2><canvas id="mapCanvas" width="1020" height="750"></canvas><div style="margin-top:6px;font-size:14px">💗 = you · ⛵ = boats · ❓ = animals to find · 🐉 = boss (when awake)</div>');
-  const c=$('mapCanvas'),g=c.getContext('2d'),s=3;g.imageSmoothingEnabled=false;g.drawImage(mm,0,0,MW*s,MH*s);
+  openOverlay('<h2>🗺️ Map of Pet Islands</h2><canvas id="mapCanvas" width="1020" height="986"></canvas><div style="margin-top:6px;font-size:14px">💗 = you · ⛵ = boats · ❓ = animals to find · 💧 = sea animals (dive to find them) · 🐉 = boss (when awake)</div>');
+  const c=$('mapCanvas'),g=c.getContext('2d'),s=1.7;g.imageSmoothingEnabled=false;g.drawImage(mm,0,0,MW*s,MH*s);
   g.textAlign='center';g.textBaseline='middle';
   const em=(e,x,y,sz)=>{g.font=`${sz}px ${EMOJI_FONT}`;g.fillText(e,x,y);};
-  BOATS.forEach(b=>em('⛵',b.x/T*s,b.y/T*s,16));
-  ANIMALS.forEach(a=>{if(!hasPet(a.pet))em('❓',a.x/T*s,a.y/T*s,18);});
+  BOATS.forEach(b=>em('⛵',b.x/T*s,b.y/T*s,12));
+  ANIMALS.forEach(a=>{if(!hasPet(a.pet))em(a.sea?'💧':'❓',a.x/T*s,a.y/T*s,14);});
   BUILDINGS.forEach(b=>{if(b.k==='museum')em('🏛️',b.x/T*s,b.y/T*s,30);if(b.k==='house')em('🏠',b.x/T*s,b.y/T*s,26);if(b.k==='volcano')em('🌋',b.x/T*s,b.y/T*s,36);});
   if(S.bossAwake&&BOSS)em(BOSS.e,BOSS.x/T*s,BOSS.y/T*s,30);
-  ISLANDS.forEach(I=>{g.font='800 18px "Baloo 2",sans-serif';g.lineWidth=4;g.strokeStyle='rgba(40,25,60,.85)';const y=(I.y-I.r-1.2)*s;g.strokeText(I.name,I.x*s,y);g.fillStyle='#fff';g.fillText(I.name,I.x*s,y);});
+  ISLANDS.forEach(I=>{g.font='800 15px "Baloo 2",sans-serif';g.lineWidth=4;g.strokeStyle='rgba(40,25,60,.85)';const y=(I.y-I.r-1.2)*s;g.strokeText(I.name,I.x*s,y);g.fillStyle='#fff';g.fillText(I.name,I.x*s,y);});
   em('💗',P.x/T*s,P.y/T*s,30);
 }
 function openHelp(){
@@ -714,11 +882,13 @@ function openHelp(){
   <kbd>🕹️ Circle</kbd><span>Steer with your thumb</span>
   <kbd>💬 Big yellow button</kbd><span>Talk, pick, sail, go in (it glows when something is close)</span>
   <kbd>🕊️ Blue button</kbd><span>Fly! Tap again to land</span>
+  <kbd>🌊 Dive</kbd><span>In a boat out at sea, the yellow button turns into Dive. Underwater it turns into ⬆️ Up</span>
   <kbd>🎒 🗺️ ❓</kbd><span>Backpack, map, help</span>`;
   openOverlay(`<h2>❓ How to Play</h2><div class="keys">${isTouch()?touchKeys:''}
   <kbd>WASD / Arrows</kbd><span>Walk, sail or fly</span>
   <kbd>E / Space</kbd><span>Talk, pick veggies, get in a boat, hop off, go in museums</span>
   <kbd>F</kbd><span>Fly! (press again to land on land or in a boat)</span>
+  <kbd>Q</kbd><span>Dive under the sea from your boat, or swim back up</span>
   <kbd>I</kbd><span>Backpack: pets, powers, snacks</span>
   <kbd>M</kbd><span>Map</span>
   <kbd>1-9</kbd><span>Pick choices and battle moves</span></div>
@@ -735,11 +905,11 @@ function openHelp(){
 let hudDirty=true,hudT=0;
 function updateHUD(){
   $('who').textContent=`${S.char} ${S.name}`;
-  $('petsRow').textContent=S.pets.map(id=>PETS[id].e).join('');
+  const tm=teamPets();$('petsRow').textContent=tm.map(id=>PETS[id].e).join('')+(S.pets.length>tm.length?` +${S.pets.length-tm.length}`:'');
   const st=(n,e,o)=>Array.from({length:RACE},(_,i)=>i<n?e:o).join('');
   $('race').innerHTML=S.bossAwake?`<div>${BOSS.e} ${BOSS.name} is awake!</div><div class="bar">Go to ${ISLANDS[BOSS.island].name}</div>`:`<div>Boss Race</div><div class="bar">You ${st(S.race.you,'⭐','☆')}</div><div class="bar">Rivals ${st(S.race.rival,'🌩️','·')}</div>`;
-  const ew=effWeather();$('weatherTag').textContent=ew==='inside'?'🏛️ Inside':`${WEATHER[ew].e} ${WEATHER[ew].n}`;
-  const items=Object.keys(CROPS).filter(k=>S.inv[k]>0);$('invBar').innerHTML=items.map(k=>`<span>${CROPS[k].e}${S.inv[k]}</span>`).join('');
+  const ew=effWeather();$('weatherTag').textContent=ew==='inside'?'🏛️ Inside':ew==='sea'?'🌊 Underwater':`${WEATHER[ew].e} ${WEATHER[ew].n}`;
+  const items=Object.keys(CROPS).filter(k=>S.inv[k]>0);$('invBar').innerHTML=(S.gems?`<span>💎${S.gems}</span>`:'')+items.map(k=>`<span>${CROPS[k].e}${S.inv[k]}</span>`).join('');
 }
 function drawMini(){const c=$('mini'),g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(mm,0,0,c.width,c.height);const sx=c.width/MW,sy=c.height/MH;
   g.fillStyle='#fff';BOATS.forEach(b=>g.fillRect(b.x/T*sx-1,b.y/T*sy-1,3,3));
@@ -749,7 +919,7 @@ function drawMini(){const c=$('mini'),g=c.getContext('2d');g.imageSmoothingEnabl
 // ================= update =================
 let time=0,saveT=0;
 function update(dt){
-  if(scene==='world'||scene==='museum'){
+  if(scene==='world'||scene==='museum'||scene==='sea'){
     let ax=0,ay=0;
     if(!dlg&&!overlayOpen()){
       if(keys['arrowleft']||keys['a'])ax-=1;if(keys['arrowright']||keys['d'])ax+=1;if(keys['arrowup']||keys['w'])ay-=1;if(keys['arrowdown']||keys['s'])ay+=1;
@@ -758,7 +928,7 @@ function update(dt){
       else if(dest){const dx=dest.x-P.x,dy=dest.y-P.y,d=Math.hypot(dx,dy);if(d<5){if(!dest.hold)dest=null;}else{ax=dx/d;ay=dy/d;if(d<24){ax*=Math.max(.3,d/24);ay*=Math.max(.3,d/24);}}}}
     const m=Math.hypot(ax,ay);if(m>1){ax/=m;ay/=m;}
     const ox=P.x,oy=P.y;
-    const sp=P.mode==='fly'?360:P.mode==='boat'?300:(hasPet('cheetah')?200:160);
+    const sp=P.mode==='fly'?440:P.mode==='boat'?380:P.mode==='swim'?240:(hasPet('cheetah')?200:160);
     P.moving=m>0.1;
     if(P.moving){const mx=ax*sp*dt,my=ay*sp*dt;
       if(canMove(P.x+mx,P.y))P.x+=mx;if(canMove(P.x,P.y+my))P.y+=my;
@@ -821,7 +991,7 @@ function drawWorld(){
   const ents=[];
   BUILDINGS.forEach(b=>ents.push({y:b.y+T*0.6,f:()=>drawBuilding(b)}));
   NPCS.forEach(n=>ents.push({y:n.y,f:()=>drawNPC(n)}));
-  ANIMALS.forEach(a=>{if(!hasPet(a.pet))ents.push({y:a.y,f:()=>drawWild(a)});});
+  ANIMALS.forEach(a=>{if(!a.sea&&!hasPet(a.pet))ents.push({y:a.y,f:()=>drawWild(a)});});
   BOATS.forEach(b=>{if(b!==P.boat)ents.push({y:b.y,f:()=>{drawEmoji('⛵',b.x,b.y-6+Math.sin(time*2+b.x)*1.5,40,b.face>0);}});});
   if(BOSS){ents.push({y:BOSS.y,f:drawBossWorld});}
   CRITTERS.forEach(c=>{if(c.x<camX-50||c.x>camX+VW/z+50||c.y<camY-50||c.y>camY+VH/z+50)return;if(!c.air&&!isWater(c.x,c.y))return;ents.push({y:c.air?c.y+40:c.y-40,f:()=>{if(c.air)drawEmoji(c.e,c.x,c.y-20+Math.sin(time*8+c.ph)*3,14,Math.cos(c.ph)<0);else{const j=Math.max(0,Math.sin(time*1.5+c.ph*3));drawEmoji(c.e,c.x,c.y-j*10,c.e==='🐳'?30:18,Math.sin(c.ph)>0,.85);}}});});
@@ -833,7 +1003,7 @@ function drawWorld(){
   drawPrompt();
 }
 function drawBuilding(b){
-  if(b.k==='house'){ctx.fillStyle='rgba(0,0,0,.15)';ctx.beginPath();ctx.ellipse(b.x,b.y+12,46,10,0,0,6.3);ctx.fill();drawEmoji('🏠',b.x,b.y-14,72);label('Home',b.x,b.y+22,10);}
+  if(b.k==='house'){ctx.fillStyle='rgba(0,0,0,.15)';ctx.beginPath();ctx.ellipse(b.x,b.y+12,46,10,0,0,6.3);ctx.fill();drawEmoji('🏠',b.x,b.y-14,72);label(b.label||'Home',b.x,b.y+22,10);}
   if(b.k==='museum'){ctx.fillStyle='rgba(0,0,0,.15)';ctx.beginPath();ctx.ellipse(b.x,b.y+12,52,11,0,0,6.3);ctx.fill();drawEmoji('🏛️',b.x,b.y-18,84);label(MUSEUMS[b.museum].name,b.x,b.y+24,11,'#ffe27a');}
   if(b.k==='volcano'){drawEmoji('🌋',b.x,b.y-24,150);if(!S.bossAwake){drawEmoji('💤',b.x+40,b.y-80+Math.sin(time*2)*4,24);}else{ctx.fillStyle=`rgba(255,80,40,${.25+.15*Math.sin(time*5)})`;ctx.beginPath();ctx.arc(b.x,b.y-80,30,0,6.3);ctx.fill();}}
 }
@@ -854,6 +1024,7 @@ function drawPet(p,i){const pd=PETS[p.id];const inBoat=P.mode==='boat';const fly
 function drawWings(x,y,s){const f=Math.sin(time*18)*0.5;ctx.fillStyle='rgba(255,255,255,.85)';ctx.strokeStyle='rgba(150,200,255,.9)';ctx.lineWidth=1;
   [-1,1].forEach(d=>{ctx.save();ctx.translate(x+d*8*s,y);ctx.rotate(d*(-.5+f));ctx.beginPath();ctx.ellipse(d*9*s,-4*s,11*s,6*s,0,0,6.3);ctx.fill();ctx.stroke();ctx.restore();});}
 function drawPlayer(){
+  if(scene==='sea'){const y=P.y-8+Math.sin(time*2.5)*3;drawEmoji(S.char,P.x,y,30);ctx.strokeStyle='rgba(220,245,255,.85)';ctx.fillStyle='rgba(200,240,255,.12)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(P.x,y-4,17,0,6.3);ctx.fill();ctx.stroke();ctx.fillStyle='rgba(255,255,255,.7)';ctx.beginPath();ctx.ellipse(P.x-7,y-13,4,2,-.6,0,6.3);ctx.fill();return;}
   const alt=P.alt*22;
   if(P.mode==='boat'){const b=Math.sin(time*2.5)*1.5;drawEmoji('⛵',P.x,P.y-6+b,48,P.face>0);drawEmoji(S.char,P.x-6*P.face,P.y-14+b,20);return;}
   ctx.fillStyle=`rgba(0,0,0,${.22-P.alt*.1})`;ctx.beginPath();ctx.ellipse(P.x,P.y+10,12*(1-P.alt*.3),4.5*(1-P.alt*.3),0,0,6.3);ctx.fill();
@@ -895,7 +1066,7 @@ function drawMuseum(){
 // ================= battle =================
 let B=null;
 const RACE=7,TEAM_MAX=4,SNACK_MAX=3,PET_REST=4;
-const MOVES=[{n:'Water Balloon',e:'🎈'},{n:'Pillow Toss',e:'☁️'},{n:'Snowball',e:'⚪'},{n:'Tickle Attack',e:'🪶'},{n:'Mud Pie',e:'🟤'},{n:'Confetti Blast',e:'🎊'}];
+const MOVES=[{n:'Water Balloon',e:'🎈'},{n:'Pillow Toss',e:'☁️'},{n:'Snowball',e:'⚪'},{n:'Tickle Attack',e:'✨'},{n:'Mud Pie',e:'🍫'},{n:'Confetti Blast',e:'🎊'}];
 function teamPets(){const t=(S.team||[]).filter(hasPet);return (t.length?t:S.pets).slice(0,TEAM_MAX);}
 const bossHP=()=>BOSS.hp+S.bossBonus+Math.floor(S.bossBeaten/BOSSES.length)*400;
 function startBattle(opp){
@@ -939,8 +1110,8 @@ const POWERS={
   leopard:async()=>{const L=layout();await shoot('🐾',petFrom('leopard'),L.EP,.45,44);const c=Math.random()<.3;hitEnemy(ri(25,32)*(c?2:1),c);},
   lion:async()=>{const L=layout();await shoot('👑',petFrom('lion'),L.EP,.5,52);hitEnemy(ri(40,50));},
   tiger:async()=>{const L=layout();await shoot('🐯',petFrom('tiger'),L.EP,.45,50);hitEnemy(ri(30,38));B.weak=1;bmsg('Tiger Roar! The other side is scared and will hit softer next time!');},
-  fish:async()=>{petFrom('fish');await wait(300);B.shield=2;const L=layout();fxBurst(L.PP.x,L.PP.y,['#9fe3ff','#ffffff','#5fd3ea'],24);SFX.heal();bmsg('Bubble Shield! It will block the next 2 attacks! 🫧');},
-  penguin:async()=>{const L=layout();await shoot('❄️',petFrom('penguin'),L.EP,.45);hitEnemy(ri(18,24));B.stun=1;bmsg('Ice Slide! The other side is frozen for a turn! 🧊');},
+  fish:async()=>{petFrom('fish');await wait(300);B.shield=2;const L=layout();fxBurst(L.PP.x,L.PP.y,['#9fe3ff','#ffffff','#5fd3ea'],24);SFX.heal();bmsg('Bubble Shield! It will block the next 2 attacks! 💧');},
+  penguin:async()=>{const L=layout();await shoot('❄️',petFrom('penguin'),L.EP,.45);hitEnemy(ri(18,24));B.stun=1;bmsg('Ice Slide! The other side is frozen for a turn! ❄️');},
   bunny:async()=>{petFrom('bunny');await wait(300);healMe(45);},
   deer:async()=>{petFrom('deer');await wait(300);healMe(20);B.shield=Math.max(B.shield,1);bmsg('Forest Blessing! You healed, and a leaf shield will block the next attack. 🍃');},
   fox:async()=>{const L=layout();await shoot('🍂',petFrom('fox'),L.EP,.4);hitEnemy(ri(20,26));healMe(12);},
@@ -950,11 +1121,21 @@ const POWERS={
   octopus:async()=>{const L=layout();await shoot('💧',petFrom('octopus'),L.EP,.5,52);hitEnemy(ri(35,42));B.stun=1;bmsg('Ink Splash! The other side can\'t see and loses a turn!');},
   rex:async()=>{const L=layout();await shoot('💥',petFrom('rex'),L.EP,.5,64);hitEnemy(ri(70,85));fxBurst(L.EP.x,L.EP.y,['#9bd16b','#fff','#ffd93d'],30);},
 };
+async function runSpec(id){const p=PETS[id],w=p.pw||{},L=layout(),from=petFrom(id);
+  if(w.hit){const n=w.hits||1;for(let k=0;k<n;k++){await shoot(w.fx||p.e,from,L.EP,n>1?.25:.45,n>1?34:46);const c=w.crit&&Math.random()<w.crit;hitEnemy(ri(w.hit[0],w.hit[1])*(c?2:1),c);}}
+  else await wait(300);
+  const got=[];
+  if(w.heal)healMe(w.heal);
+  if(w.shield){B.shield=Math.max(B.shield,w.shield);got.push(`a shield for ${w.shield} attack${w.shield>1?'s':''} 🛡️`);}
+  if(w.dodge){B.dodge=true;got.push('a lucky dodge 🍀');}
+  if(w.weak){B.weak=1;got.push('the next attack on you will be weaker');}
+  if(w.stun&&Math.random()<w.stun){B.stun=1;got.push('the other side is stunned 💫');}
+  if(got.length)bmsg(`${p.power}! ${got.join(', ')}!`);}
 async function playerAction(kind,arg){
   if(!B||B.busy||B.over)return;B.busy=true;B.menu=null;renderBtns();
   const L=layout();
   if(kind==='splash'){bmsg(`${S.name} used Splash Attack!`);await shoot('💦',L.PP,L.EP,.45);hitEnemy(ri(10,16));}
-  else if(kind==='pet'){const p=PETS[arg];bmsg(`${p.short} used ${p.power}!`);await POWERS[arg]();B.cd[arg]=PET_REST;}
+  else if(kind==='pet'){const p=PETS[arg];bmsg(`${p.short} used ${p.power}!`);await (POWERS[arg]?POWERS[arg]():runSpec(arg));B.cd[arg]=PET_REST;}
   else if(kind==='snack'){S.inv[arg]--;B.snacks++;bmsg(`You ate a ${CROPS[arg].n.toLowerCase()}. Yum! ${CROPS[arg].e}`);B.fx.push({k:'proj',e:CROPS[arg].e,x0:L.PP.x,y0:L.PP.y-80,x1:L.PP.x,y1:L.PP.y,age:0,life:.4,size:36,done:()=>{}});await wait(400);healMe(CROPS[arg].heal);}
   await wait(650);
   if(B.ehp<=0)return win();
@@ -962,7 +1143,7 @@ async function playerAction(kind,arg){
 }
 // Each incoming hit can be blocked by a shield, dodged, or lands.
 function takeHit(dmg){const L=layout();
-  if(B.shield>0){B.shield--;fxText('Blocked!',L.PP.x,L.PP.y-L.s*.12,'#4fc3f7');bmsg('Your shield blocked it! 🫧');}
+  if(B.shield>0){B.shield--;fxText('Blocked!',L.PP.x,L.PP.y-L.s*.12,'#4fc3f7');bmsg('Your shield blocked it! 💧');}
   else if(B.dodge){B.dodge=false;fxText('Dodged!',L.PP.x,L.PP.y-L.s*.12,'#b28dff');bmsg('You dodged it! 🍀');}
   else{B.hp=Math.max(0,B.hp-dmg);B.pShake=.4;fxText('-'+dmg,L.PP.x,L.PP.y-L.s*.12,'#ff5e57');SFX.hit();}}
 async function enemyTurn(){
@@ -1066,11 +1247,75 @@ function drawBattle(){
   bar(VW-bw-12,12,bw,B.ename+(B.enraged?' 😡':''),B.ee,B.ehp,B.emax,'#ff5fa2');
 }
 
+
+// ================= under the sea (scene) =================
+function dive(){
+  if(scene!=='world'||P.mode!=='boat')return;
+  scene='sea';P.mode='swim';P.diveBoat=P.boat;P.boat=null;dest=null;resetTrail();SFX.boat();hudDirty=true;
+  toast('🌊 Splash! You dove under the sea!');
+  if(!S.seen.dive){S.seen.dive=1;say({name:'Under the Sea',emoji:'🐠',text:`Swim around and look at sea creatures 👀 to fill your Sea Book. Open treasure chests to find sea gems 💎. Sea animals like turtles and dolphins want gems to be your friend! ${isTouch()?'Tap ⬆️ Up':'Press Q'} to go back up to your boat.`});}
+}
+function surface(){
+  if(scene!=='sea')return;
+  scene='world';P.mode='boat';P.boat=P.diveBoat||nearestBoat(1e9);P.diveBoat=null;dest=null;
+  if(P.boat){P.boat.x=P.x;P.boat.y=P.y;}resetTrail();SFX.boat();toast('⛵ Back up in your boat!');hudDirty=true;save();
+}
+function findSeaAct(take){
+  ANIMALS.forEach(a=>{if(!a.sea||hasPet(a.pet))return;const d=dist(a.x,a.y,P.x,P.y);if(d<62)take(d-12,{type:'animal',o:a,x:a.x,y:a.y-20,label:'Meet '+PETS[a.pet].short});});
+  CHESTS.forEach(c=>{if(S.chests[c.id])return;const d=dist(c.x,c.y,P.x,P.y);if(d<52)take(d-6,{type:'chest',o:c,x:c.x,y:c.y-22,label:'Open the treasure chest'});});
+  for(const c of SEA_LIFE){if(!c.vis)continue;const d=dist(c.x,c.y,P.x,P.y),r=c.sp.big?80:52;if(d<r)take(d+8,{type:'creature',o:c,x:c.x,y:c.y-(c.sp.big?40:18),label:(S.book[c.sp.n]?'Look at the ':'✨ New! ')+c.sp.n});}
+}
+function openChest(c){if(S.chests[c.id])return;S.chests[c.id]=1;const g=ri(1,3);S.gems=(S.gems||0)+g;const crop=pick(Object.keys(CROPS));S.inv[crop]=(S.inv[crop]||0)+1;
+  SFX.unlock();hudDirty=true;save();const left=CHESTS.length-Object.keys(S.chests).length;
+  say({name:'Treasure!',emoji:'💎',text:`You found ${g} sea gem${g>1?'s':''} 💎 and a ${CROPS[crop].n.toLowerCase()} ${CROPS[crop].e}! You have ${S.gems} sea gems. (${left} treasure chests left to find in the whole ocean.)`});}
+function lookCreature(c){const sp=c.sp,isNew=!S.book[sp.n];S.book[sp.n]=1;if(isNew){SFX.pick();hudDirty=true;save();}
+  say({name:sp.n+(isNew?' ✨ NEW!':''),emoji:sp.e,text:`${sp.fact} ${isNew?`(Sea Book: ${Object.keys(S.book).length}/${SEA_SPECIES.length} found)`:''}`});}
+const seaBubbles=[];for(let i=0;i<45;i++)seaBubbles.push({x:Math.random(),y:Math.random(),r:rand(1.5,4.5),v:rand(.03,.09),w:Math.random()*6});
+function drawChest(x,y,open){ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(x,y+10,16,5,0,0,6.3);ctx.fill();
+  ctx.fillStyle='#8a5a2b';roundRect(x-14,y-6,28,16,3);ctx.fill();ctx.fillStyle='#d9a441';ctx.fillRect(x-14,y-1,28,3);ctx.fillRect(x-2,y-6,4,16);
+  if(open){ctx.fillStyle='#5e3c1a';roundRect(x-14,y-16,28,9,3);ctx.fill();}
+  else{ctx.fillStyle='#a06a32';roundRect(x-14,y-12,28,8,4);ctx.fill();ctx.fillStyle='#ffd93d';ctx.beginPath();ctx.arc(x,y-1,2.5,0,6.3);ctx.fill();
+    const tw=(Math.sin(time*3+x)+1)/2;ctx.fillStyle=`rgba(255,240,150,${tw*.8})`;ctx.beginPath();ctx.arc(x+10,y-14,2+tw*2,0,6.3);ctx.fill();}}
+function drawSea(){
+  const z=ZOOM;let camX=clamp(P.x-VW/2/z,0,MW*T-VW/z),camY=clamp(P.y-VH/2/z,0,MH*T-VH/z);
+  ctx.setTransform(DPR,0,0,DPR,0,0);const bg=ctx.createLinearGradient(0,0,0,VH);bg.addColorStop(0,'#13679b');bg.addColorStop(1,'#062a47');ctx.fillStyle=bg;ctx.fillRect(0,0,VW,VH);
+  ctx.setTransform(DPR*z,0,0,DPR*z,-camX*DPR*z,-camY*DPR*z);RES=DPR*z;CAM={x:camX,y:camY,z};
+  const x0=Math.max(0,Math.floor(camX/T)),x1=Math.min(MW-1,Math.ceil((camX+VW/z)/T)),y0=Math.max(0,Math.floor(camY/T)),y1=Math.min(MH-1,Math.ceil((camY+VH/z)/T));
+  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=y*MW+x,t=terr[i],h=dvar[i];let col;
+    if(t===0)col=(h&1)?'#0f5280':'#0e4c78';else if(t===1)col=(h&1)?'#2a83ab':'#287da4';else{col='#11303f';if(y+1<MH&&terr[i+MW]<=1)col='#1b4a5e';}
+    ctx.fillStyle=col;ctx.fillRect(x*T,y*T,T+.6,T+.6);}
+  // sea floor decorations
+  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=y*MW+x,t=terr[i],h=dvar[i];if(t>1)continue;const cx=x*T+16,cy=y*T+16;
+    if(h%11===0){ctx.strokeStyle=t===1?'#3fbf6a':'#2f9a58';ctx.lineWidth=3;ctx.lineCap='round';for(let k=-1;k<=1;k++){const sw=Math.sin(time*1.6+x+k)*6;ctx.beginPath();ctx.moveTo(cx+k*6,cy+14);ctx.quadraticCurveTo(cx+k*6+sw,cy,cx+k*6+sw*1.6,cy-16-(h%5)*2);ctx.stroke();}}
+    else if(h%13===1&&t===1){const cols=['#ff7aa8','#ff9f43','#b28dff','#ff5e57'];ctx.fillStyle=cols[h%4];for(let k=0;k<5;k++){ctx.beginPath();ctx.arc(cx-8+k*4,cy+6-Math.abs(k-2)*5-(k%2)*6,4.5,0,6.3);ctx.fill();}}
+    else if(h%17===2){ctx.fillStyle='#3b5966';ctx.beginPath();ctx.ellipse(cx,cy+8,12,7,0,0,6.3);ctx.fill();ctx.fillStyle='#4f707e';ctx.beginPath();ctx.ellipse(cx-3,cy+5,6,3,0,0,6.3);ctx.fill();}
+    else if(h%7===3){ctx.fillStyle='rgba(255,240,200,.18)';ctx.fillRect(cx-6,cy+4,12,2);}}
+  CHESTS.forEach(c=>{if(c.x<camX-40||c.x>camX+VW/z+40||c.y<camY-40||c.y>camY+VH/z+40)return;drawChest(c.x,c.y,!!S.chests[c.id]);});
+  const ents=[];const vx0=camX-160,vx1=camX+VW/z+160,vy0=camY-160,vy1=camY+VH/z+160;
+  for(const c of SEA_LIFE){c.vis=false;if(c.hx+c.r<vx0||c.hx-c.r>vx1||c.hy+c.r<vy0||c.hy-c.r>vy1)continue;c.vis=true;
+    if(!c.sp.still){const ph=c.ph+time*c.v*(c.sp.big?.25:.6);c.x=c.hx+Math.cos(ph)*c.r;c.y=c.hy+Math.sin(ph)*c.r*.6;c.face=(-Math.sin(ph)*c.v)>0?1:-1;}
+    const sz=c.sp.big?72:c.sp.still?15:c.sp.crawl?20:24;ents.push({y:c.y,f:()=>{const bob=c.sp.still||c.sp.crawl?0:Math.sin(time*3+c.ph)*2;drawEmoji(c.sp.e,c.x,c.y+bob,sz,c.face>0&&!c.sp.still,c.sp.big?.92:1);
+      if(!S.book[c.sp.n]&&dist(c.x,c.y,P.x,P.y)<180)drawEmoji('✨',c.x+sz*.5,c.y-sz*.5,9);}});}
+  ANIMALS.forEach(a=>{if(a.sea&&!hasPet(a.pet))ents.push({y:a.y,f:()=>drawWild(a)});});
+  pets.forEach((p,i)=>ents.push({y:p.y,f:()=>drawPet(p,i)}));
+  ents.push({y:P.y+1,f:drawPlayer});
+  ents.sort((a,b)=>a.y-b.y).forEach(e=>e.f());
+  drawDest();drawPrompt();
+  // light rays, bubbles and a soft dark edge, in screen space
+  ctx.setTransform(DPR,0,0,DPR,0,0);RES=DPR;
+  for(let k=0;k<5;k++){const x=(((k*.23+time*.008)%1.3)-.15)*VW;ctx.fillStyle='rgba(190,235,255,.05)';ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+70,0);ctx.lineTo(x+260,VH);ctx.lineTo(x+120,VH);ctx.closePath();ctx.fill();}
+  ctx.strokeStyle='rgba(220,245,255,.55)';ctx.lineWidth=1.2;
+  for(const b of seaBubbles){b.y-=b.v*.016;if(b.y<-.05){b.y=1.05;b.x=Math.random();}const x=b.x*VW+Math.sin(time*2+b.w)*8,y=b.y*VH;ctx.beginPath();ctx.arc(x,y,b.r,0,6.3);ctx.stroke();}
+  if(P.moving&&Math.random()<.3)seaBubbles[Math.floor(Math.random()*seaBubbles.length)]=({x:.5+rand(-.01,.01),y:.5,r:rand(1.5,3.5),v:rand(.05,.1),w:Math.random()*6});
+  const vg=ctx.createRadialGradient(VW/2,VH/2,Math.min(VW,VH)*.25,VW/2,VH/2,Math.max(VW,VH)*.7);vg.addColorStop(0,'rgba(0,20,40,0)');vg.addColorStop(1,'rgba(0,15,35,.55)');ctx.fillStyle=vg;ctx.fillRect(0,0,VW,VH);
+}
+
 // ================= main draw/loop =================
 function draw(){
   ctx.setTransform(DPR,0,0,DPR,0,0);
   if(scene==='title'){drawTitleBg();return;}
   if(scene==='world'){drawWorld();drawWeather();}
+  else if(scene==='sea'){drawSea();}
   else if(scene==='museum'){drawMuseum();}
   else if(scene==='battle'&&B){drawBattle();}
   if(scene!=='battle')drawMini();
@@ -1088,12 +1333,13 @@ const existing=loadSave();
 if(existing){$('contBtn').classList.remove('hidden');$('nameIn').value=existing.name||'Addison';chosen=existing.char||chosen;[...$('chars').children].forEach(x=>x.classList.toggle('sel',x.textContent===chosen));}
 function begin(fresh){
   if(fresh||!existing){S=defaultState();}else{S=Object.assign(defaultState(),existing);}
+  if(S.mapv!==3){S.mapv=3;S.boats=null;S.mode='walk';S.px=ISLANDS[0].cx;S.py=ISLANDS[0].cy;}
   S.name=($('nameIn').value||'').trim().slice(0,14)||'Addison';S.char=chosen;
   if(S.boats&&S.boats.length===BOATS.length)S.boats.forEach((b,i)=>{BOATS[i].x=b[0];BOATS[i].y=b[1];});
   P.x=S.px;P.y=S.py;P.mode='walk';P.boat=null;
   if(S.mode==='boat'&&S.boatIdx>=0&&BOATS[S.boatIdx]){P.mode='boat';P.boat=BOATS[S.boatIdx];P.x=P.boat.x;P.y=P.boat.y;}
   else if(!isLandWalk(P.x,P.y)){P.x=ISLANDS[0].cx;P.y=ISLANDS[0].cy;}
-  S.read=S.read||{};if(!S.team||!S.team.length)S.team=S.pets.slice(0,4);refreshBoss();
+  S.read=S.read||{};S.gems=S.gems||0;S.chests=S.chests||{};S.book=S.book||{};if(!S.team||!S.team.length)S.team=S.pets.slice(0,4);refreshBoss();
   pets=[];syncPets();resetTrail();
   $('title').classList.add('hidden');$('hud').classList.remove('hidden');scene='world';hudDirty=true;lastIsland=-2;
   unlockAudio();
@@ -1106,7 +1352,7 @@ function begin(fresh){
   }
   save();
 }
-window.__pi={get P(){return P},get S(){return S},get B(){return B},get act(){return nearAct},get scene(){return scene},get dest(){return dest},NPCS,ANIMALS,PLANTS,BUILDINGS,BOSSES,terr,solid,isl,MW,MH,T,keys,step(n=1,dt=1/60){for(let i=0;i<n;i++){time+=dt;update(dt);}draw();},doAct,toggleFly,startBattle,BOATS,ISLANDS};
+window.__pi={get P(){return P},get S(){return S},get B(){return B},get act(){return nearAct},get scene(){return scene},get dest(){return dest},SEA_LIFE,CHESTS,NPCS,ANIMALS,PLANTS,BUILDINGS,BOSSES,terr,solid,isl,MW,MH,T,keys,step(n=1,dt=1/60){for(let i=0;i<n;i++){time+=dt;update(dt);}draw();},doAct,toggleFly,startBattle,BOATS,ISLANDS};
 $('startBtn').onclick=()=>begin(true);
 $('contBtn').onclick=()=>begin(false);
 })();
