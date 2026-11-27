@@ -2,6 +2,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1f7fc4">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Pet Islands Adventure</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,10 +37,20 @@ button:focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
 #topRight{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 #mini{width:150px;height:145px;border-radius:12px;border:3px solid #fff;box-shadow:0 4px 0 rgba(58,42,77,.25);background:#1f7fc4;cursor:pointer}
 #weatherTag{font-weight:700;font-size:14px}
-#invBar{display:flex;flex-wrap:wrap;gap:2px 8px;font-size:15px;font-weight:700;margin-top:2px;padding-top:3px;border-top:2px dashed #ecdcc4}
-#invBar:empty{display:none}
+#topLeft{cursor:pointer}
 #btns{position:absolute;bottom:calc(10px + env(safe-area-inset-bottom,0px));right:max(10px,env(safe-area-inset-right,0px));display:flex;gap:8px}
 .rbtn{width:48px;height:48px;border-radius:50%;font-size:24px;background:var(--panel);box-shadow:0 4px 0 rgba(58,42,77,.3);border:3px solid #fff}
+.rbtn svg{display:block;margin:auto}
+.rbtn{position:relative}
+.badge{position:absolute;top:-6px;right:-6px;background:var(--accent);color:#fff;font-size:11px;font-weight:800;border-radius:999px;min-width:20px;height:20px;line-height:16px;padding:0 4px;border:2px solid #fff;font-family:var(--font)}
+.badge:empty{display:none}
+.bagTabs{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 4px}
+.itemGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.itemTile{background:#fff;border-radius:14px;padding:8px;display:flex;flex-direction:column;align-items:center;text-align:center;font-size:14px;gap:2px;border:3px solid #f0e6d6}
+.itemTile .ie{font-size:40px;line-height:1.1}
+.itemTile b{font-size:18px}
+.itemTile small{color:var(--muted)}
+#fireTip{font-size:14px;line-height:1.35;margin-top:12px;background:#fff;border-radius:12px;padding:6px 10px}
 .rbtn.off{opacity:.45;text-decoration:line-through}
 .rbtn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(58,42,77,.3)}
 #touch{display:none}
@@ -141,12 +154,13 @@ body.touch #touch{display:block}
 <canvas id="game"></canvas>
 
 <div id="hud" class="hidden">
-  <div id="topLeft" class="card"><div id="who"></div><div id="petsRow"></div><div id="invBar" title="Your snacks"></div></div>
+  <div id="topLeft" class="card" title="My Pets (P)"><div id="who"></div><div id="petsRow"></div></div>
   <div id="race" class="card"></div>
   <div id="topRight"><canvas id="mini" width="150" height="145" title="Open map"></canvas><div id="weatherTag" class="card"></div></div>
   <div id="btns">
+    <button class="rbtn hidden" id="bFull" title="Full screen"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <button class="rbtn" id="bPets" title="My Pets (P)">🐾</button>
-    <button class="rbtn" id="bBag" title="Backpack (I)">🎒</button>
+    <button class="rbtn" id="bBag" title="Backpack: see everything you are carrying (I)">🎒<span id="bagCount" class="badge"></span></button>
     <button class="rbtn" id="bMap" title="Map (M)">🗺️</button>
     <button class="rbtn" id="bHelp" title="Help (H)">❓</button>
     <button class="rbtn" id="bMusic" title="Music on/off">🎵</button>
@@ -172,6 +186,7 @@ body.touch #touch{display:block}
     <div id="chars"></div>
     <div><input id="nameIn" maxlength="14" value="Addison" aria-label="Your name"></div>
     <div><button class="bigBtn" id="startBtn">▶ New Game</button><button class="bigBtn alt hidden" id="contBtn">Continue</button></div>
+    <div id="fireTip" class="hidden">📱 <b>Fire tablet:</b> the game goes full screen when you start. To play it like an app, open the browser menu and tap <b>Add to Home Screen</b>.</div>
   </div>
 </div>
 
@@ -193,8 +208,9 @@ const hash=(x,y)=>{let h=(x*374761393+y*668265263)|0;h=(h^(h>>>13))*1274126177|0
 // ================= canvas & sprites =================
 const cv=$('game'),ctx=cv.getContext('2d');
 let VW=0,VH=0,DPR=1,ZOOM=1,RES=1;
-function resize(){DPR=Math.min(2,window.devicePixelRatio||1);VW=innerWidth;VH=innerHeight;cv.width=Math.round(VW*DPR);cv.height=Math.round(VH*DPR);cv.style.width=VW+'px';cv.style.height=VH+'px';ZOOM=clamp(Math.min(VW/1000,VH/700)*1.3,0.7,1.6);}
-addEventListener('resize',resize);resize();
+const IS_FIRE=/Silk|KF[A-Z]{2,6}\b|Kindle|AmazonWebAppPlatform/i.test(navigator.userAgent||'');
+function resize(){DPR=Math.min(IS_FIRE?1.25:2,window.devicePixelRatio||1);VW=innerWidth;VH=innerHeight;cv.width=Math.round(VW*DPR);cv.height=Math.round(VH*DPR);cv.style.width=VW+'px';cv.style.height=VH+'px';ZOOM=clamp(Math.min(VW/1000,VH/700)*1.3,0.7,1.6);}
+addEventListener('resize',resize);addEventListener('orientationchange',()=>setTimeout(resize,250));resize();
 const EMOJI_FONT='"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji","Twemoji Mozilla",sans-serif';
 const spriteCache=new Map();
 function sprite(e,px){const k=e+'|'+px;let c=spriteCache.get(k);if(c)return c;c=document.createElement('canvas');const s=Math.ceil(px*1.4);c.width=c.height=s;const g=c.getContext('2d');g.font=`${px}px ${EMOJI_FONT}`;g.textAlign='center';g.textBaseline='middle';g.fillText(e,s/2,s/2+px*0.07);spriteCache.set(k,c);return c;}
@@ -1147,7 +1163,7 @@ function effWeather(){if(scene==='cave')return 'cave';if(scene==='museum')return
 function weatherUpdate(dt){
   Wt.t-=dt;if(Wt.t<=0)pickWeather();
   const ew=effWeather();if(ew!==wpType){WP=[];wpType=ew;}
-  const want={rain:220,storm:340,snow:160,windy:28}[ew]||0;
+  const want=Math.round(({rain:220,storm:340,snow:160,windy:28}[ew]||0)*(IS_FIRE?.5:1));
   while(WP.length<want)WP.push(newPart(ew,true));
   for(const p of WP){p.x+=p.vx*dt;p.y+=p.vy*dt;if(ew==='snow')p.x+=Math.sin(time*2+p.s*10)*20*dt;if(p.y>VH+20||p.x<-60||p.x>VW+60)Object.assign(p,newPart(ew,false));}
   if(ew==='storm'){Wt.flashT-=dt;if(Wt.flashT<=0){Wt.flash=1;Wt.flashT=rand(4,9);setTimeout(()=>SFX.thunder(),250);}}
@@ -1258,9 +1274,27 @@ stickEl.addEventListener('pointerup',endStick);stickEl.addEventListener('pointer
 function moveStick(e){unlockAudio();const r=stickEl.getBoundingClientRect();let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);const m=Math.hypot(dx,dy),max=r.width*0.36;if(m>max){dx=dx/m*max;dy=dy/m*max;}stick.dx=dx/max;stick.dy=dy/max;knob.style.transform=`translate(${dx}px,${dy}px)`;}
 $('tE').addEventListener('click',()=>{unlockAudio();if(dlg)chooseDlg(0);else if(scene!=='battle'){dest=null;doAct(nearAct);}});
 $('tF').addEventListener('click',()=>{unlockAudio();if(!dlg){dest=null;toggleFly();}});
-$('bPets').onclick=()=>openPets();$('bBag').onclick=()=>openBag();$('bMap').onclick=()=>openMap();$('mini').onclick=()=>openMap();$('bHelp').onclick=()=>openHelp();
+$('bPets').onclick=()=>openPets();$('topLeft').onclick=()=>openPets();$('bBag').onclick=()=>openBag();$('bMap').onclick=()=>openMap();$('mini').onclick=()=>openMap();$('bHelp').onclick=()=>openHelp();
 function paintAudioBtns(){$('bSnd').textContent=sfxOn?'🔊':'🔇';$('bMusic').classList.toggle('off',!musicOn);$('bMusic').title=musicOn?'Music is on (tap to turn off)':'Music is off (tap to turn on)';}
 $('bSnd').onclick=()=>{unlockAudio();setSfx(!sfxOn);paintAudioBtns();if(sfxOn)SFX.click();toast(sfxOn?'🔊 Sound effects on':'🔇 Sound effects off',1400);};
+const fsEl=document.documentElement,FULL_SVG='<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',EXIT_SVG='<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const inFS=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
+const asApp=()=>{try{return matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches;}catch(e){return false;}};
+const canFS=()=>!!(fsEl.requestFullscreen||fsEl.webkitRequestFullscreen)&&(document.fullscreenEnabled||document.webkitFullscreenEnabled)!==false;
+function goFullscreen(quiet){if(inFS()||asApp()||!canFS())return;
+  const done=()=>{try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{});}catch(e){}};
+  const fail=()=>{if(!quiet)toast('Full screen is not allowed here. Try "Add to Home Screen" in the browser menu!',3500);};
+  try{const r=(fsEl.requestFullscreen||fsEl.webkitRequestFullscreen).call(fsEl,{navigationUI:'hide'});if(r&&r.then)r.then(done,fail);else done();}catch(e){fail();}}
+function exitFullscreen(){const f=document.exitFullscreen||document.webkitExitFullscreen;try{if(f)f.call(document);}catch(e){}}
+function paintFullBtn(){const b=$('bFull');b.classList.toggle('hidden',!canFS()||asApp());b.innerHTML=inFS()?EXIT_SVG:FULL_SVG;b.title=inFS()?'Exit full screen':'Full screen';}
+['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev,()=>{paintFullBtn();setTimeout(resize,150);
+  if(IS_FIRE&&!inFS()&&scene!=='title'&&!S.seen.fsHint){S.seen.fsHint=1;toast('Tap the ⛶ button (bottom right) to go back to full screen!',3500);}}));
+$('bFull').onclick=()=>{unlockAudio();if(inFS())exitFullscreen();else goFullscreen();};paintFullBtn();
+// keep the screen from dimming and locking while you play
+let wakeLock=null;
+async function keepAwake(){try{if('wakeLock' in navigator&&!wakeLock&&!document.hidden){wakeLock=await navigator.wakeLock.request('screen');wakeLock.addEventListener('release',()=>{wakeLock=null;});}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&scene!=='title')keepAwake();});
+if(IS_FIRE&&!asApp())$('fireTip').classList.remove('hidden');
 $('bMusic').onclick=()=>{unlockAudio();setMusic(!musicOn);paintAudioBtns();toast(musicOn?'🎵 Music on':'🎵 Music off',1400);};paintAudioBtns();
 
 // ================= overlays =================
@@ -1284,9 +1318,18 @@ function openPets(focus){
   h+=`<div style="font-size:14px">Your battle team helps you in every battle. Tap any pet to see it up close and put it on your team. In a battle you can also tap 🐾 Swap pet.</div><h3>All my pets</h3><div class="petGrid">${S.pets.map(id=>card(id,team.includes(id)?' ⭐':'')).join('')}</div>`;
   openOverlay(h);$('ovBox').querySelectorAll('[data-pet]').forEach(b=>b.onclick=()=>openPets(b.dataset.pet));
 }
-function openBag(){
+function bagTabs(cur){const t=(id,txt)=>`<button class="choice ${cur===id?'':'alt'}" data-tab="${id}">${txt}</button>`;return `<div class="bagTabs">${t('items','🧺 My Stuff')}${t('progress','🏆 Progress')}${t('pets','🐾 My Pets')}</div>`;}
+function wireTabs(){$('ovBox').querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{const t=b.dataset.tab;if(t==='pets')openPets();else openBag(t);});}
+function openItems(){
+  const items=Object.keys(CROPS).filter(k=>S.inv[k]>0),relics=WRECKS.filter(w=>S.wrecks[w.id]);
+  let h=`<h2>🎒 Backpack</h2>${bagTabs('items')}<h3>💎 Treasure</h3><div class="itemGrid"><div class="itemTile"><span class="ie">💎</span><b>${S.gems||0}</b>sea gems</div>`+relics.map(w=>`<div class="itemTile"><span class="ie">${w.relic.e}</span>${w.relic.n}</div>`).join('')+'</div>';
+  h+=`<h3>🧺 Snacks</h3>`+(items.length?`<div class="itemGrid">${items.map(k=>`<div class="itemTile"><span class="ie">${CROPS[k].e}</span><b>×${S.inv[k]}</b>${CROPS[k].n}<small>+${CROPS[k].heal} energy</small></div>`).join('')}</div>`:'<i>No snacks yet! Walk over ripe veggies in a garden to pick them.</i>');
+  h+=`<div style="font-size:14px;margin-top:8px">Snacks heal you in battles (up to ${SNACK_MAX} per battle). Sea gems help you make friends with sea animals. Animals also want snacks as gifts!</div>`;
+  openOverlay(h);wireTabs();}
+function openBag(tab){
+  if(tab!=='progress')return openItems();
   const team=teamPets();
-  let h='<h2>🎒 Backpack</h2>';
+  let h='<h2>🎒 Backpack</h2>'+bagTabs('progress');
   h+=`<h3>⭐ Boss Race</h3><div>You: <b>${S.race.you}/${RACE}</b> wins &nbsp; | &nbsp; Rival Team Thunder: <b>${S.race.rival}/${RACE}</b>. ${S.bossAwake?`${BOSS.e} <b>${BOSS.name} is awake on ${ISLANDS[BOSS.island].name}!</b>`:`Win ${RACE} battles to wake the next boss: ${BOSS.name} ${BOSS.e}`}</div>`;
   h+=`<h3>🏰 Island Bosses (${landBossesBeaten()}/${LAND_BOSSES.length} beaten)</h3>`+LAND_BOSSES.map(b=>{const st=needStatus(b.need),w=(S.seaBeat||{})[b.id];return `<div style="font-size:15px;margin:3px 0">${b.e} <b>${b.name}</b> in the ${b.lair} on ${ISLANDS[b.islandIdx].name}${w?` 🏆 beaten ${w}×`:''}. ${st.ok?'<b>Awake! Go battle!</b>':'To wake: '+st.text}</div>`;}).join('');
   h+=`<h3>🌊 Sea Bosses (${seaBossesBeaten()}/${SEA_BOSSES.length} beaten)</h3>`+SEA_BOSSES.map(b=>{const st=needStatus(b.need),w=(S.seaBeat||{})[b.id];return `<div style="font-size:15px;margin:3px 0">${b.e} <b>${b.name}</b> in the ${b.lair}${w?` 🏆 beaten ${w}×`:''}. ${st.ok?'<b>Awake! Dive down and battle!</b>':'To wake: '+st.text}</div>`;}).join('');
@@ -1301,11 +1344,11 @@ function openBag(){
   h+='<h3>🧺 Snacks</h3><div class="items">';const items=Object.keys(CROPS).filter(k=>S.inv[k]>0);
   h+=items.length?items.map(k=>`<span>${CROPS[k].e} ${S.inv[k]} <small>(+${CROPS[k].heal} energy)</small></span>`).join(''):'<i>Empty! Walk over ripe veggies in a garden to pick them.</i>';
   h+=`</div><div style="font-size:14px;margin-top:4px">You can eat up to ${SNACK_MAX} snacks in each battle.</div><h3>⚙️ Game</h3><button class="choice alt" id="resetBtn">Start over (erase save)</button>`;
-  const top=$('ovBox').scrollTop;openOverlay(h);$('ovBox').scrollTop=top;
+  const top=$('ovBox').scrollTop;openOverlay(h);$('ovBox').scrollTop=top;wireTabs();
   $('ovBox').querySelectorAll('[data-team]').forEach(b=>b.onclick=()=>{const id=b.dataset.team;let t=teamPets();
     if(t.includes(id)){if(t.length===1){toast('You need at least 1 pet on your team!');return;}t=t.filter(x=>x!==id);}
     else{if(t.length>=TEAM_MAX){toast(`Your team is full (${TEAM_MAX}). Take a pet out first!`);return;}t.push(id);}
-    S.team=t;syncPets();resetTrail();hudDirty=true;save();openBag();});
+    S.team=t;syncPets();resetTrail();hudDirty=true;save();openBag('progress');});
   $('resetBtn').onclick=()=>{const b=$('resetBtn');if(b.dataset.sure){try{localStorage.removeItem(SAVE_KEY);}catch(e){}location.reload();}else{b.dataset.sure=1;b.textContent='Tap again to really erase everything';b.style.background='var(--bad)';b.style.color='#fff';}};
 }
 function openMap(){
@@ -1338,10 +1381,12 @@ function openHelp(){
   <kbd>E / Space</kbd><span>Talk, pick veggies, get in a boat, hop off, go in museums</span>
   <kbd>F</kbd><span>Fly! (press again to land on land or in a boat)</span>
   <kbd>Q</kbd><span>Dive under the sea from your boat, or swim back up</span>
-  <kbd>I</kbd><span>Backpack: pets, powers, snacks</span>
+  <kbd>I</kbd><span>Backpack 🎒: everything you are carrying, plus your progress</span>
+  <kbd>P</kbd><span>My Pets 🐾: see your pets and pick your battle team</span>
   <kbd>M</kbd><span>Map</span>
   <kbd>1-9</kbd><span>Pick choices and battle moves</span>
-  <kbd>🎵 🔊</kbd><span>Turn the music or the sound effects on and off</span></div>
+  <kbd>🎵 🔊</kbd><span>Turn the music or the sound effects on and off</span>
+  <kbd>⛶</kbd><span>Full screen (hides the browser bars)</span></div>
   <h3>Tips</h3><div style="font-size:16px;line-height:1.4">
   🐾 Your pets follow you everywhere and never hurt you.<br>
   ⚔️ People with swords over their heads want to battle. You can always say no!<br>
@@ -1359,7 +1404,7 @@ function updateHUD(){
   const st=(n,e,o)=>Array.from({length:RACE},(_,i)=>i<n?e:o).join('');
   $('race').innerHTML=S.bossAwake?`<div>${BOSS.e} ${BOSS.name} is awake!</div><div class="bar">Go to ${ISLANDS[BOSS.island].name}</div>`:`<div>Boss Race</div><div class="bar">You ${st(S.race.you,'⭐','☆')}</div><div class="bar">Rivals ${st(S.race.rival,'🌩️','·')}</div>`;
   const ew=effWeather();$('weatherTag').textContent=ew==='inside'?'🏛️ Inside':ew==='sea'?'🌊 Underwater':ew==='cave'?'🔦 Dark Cave':`${WEATHER[ew].e} ${WEATHER[ew].n}`;
-  const items=Object.keys(CROPS).filter(k=>S.inv[k]>0);$('invBar').innerHTML=(S.gems?`<span>💎${S.gems}</span>`:'')+items.map(k=>`<span>${CROPS[k].e}${S.inv[k]}</span>`).join('');
+  const cnt=Object.keys(CROPS).reduce((a,k)=>a+(S.inv[k]||0),0);$('bagCount').textContent=cnt>99?'99+':cnt?String(cnt):'';
 }
 function drawMini(){const c=$('mini'),g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(mm,0,0,c.width,c.height);const sx=c.width/MW,sy=c.height/MH;
   g.fillStyle='#fff';BOATS.forEach(b=>g.fillRect(b.x/T*sx-1,b.y/T*sy-1,3,3));
@@ -1939,6 +1984,7 @@ CHARS.forEach(c=>{const b=document.createElement('button');b.className='charBtn'
 const existing=loadSave();
 if(existing){$('contBtn').classList.remove('hidden');$('nameIn').value=existing.name||'Addison';chosen=existing.char||chosen;[...$('chars').children].forEach(x=>x.classList.toggle('sel',x.textContent===chosen));}
 function begin(fresh){
+  if(IS_FIRE)goFullscreen(true);keepAwake();
   if(fresh||!existing){S=defaultState();}else{S=Object.assign(defaultState(),existing);}
   if(S.mapv!==3){S.mapv=3;S.boats=null;S.mode='walk';S.px=ISLANDS[0].cx;S.py=ISLANDS[0].cy;}
   S.name=($('nameIn').value||'').trim().slice(0,14)||'Addison';S.char=chosen;
