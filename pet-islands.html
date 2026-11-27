@@ -38,6 +38,7 @@ button:focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
 #invBar:empty{display:none}
 #btns{position:absolute;bottom:calc(10px + env(safe-area-inset-bottom,0px));right:max(10px,env(safe-area-inset-right,0px));display:flex;gap:8px}
 .rbtn{width:48px;height:48px;border-radius:50%;font-size:24px;background:var(--panel);box-shadow:0 4px 0 rgba(58,42,77,.3);border:3px solid #fff}
+.rbtn.off{opacity:.45;text-decoration:line-through}
 .rbtn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(58,42,77,.3)}
 #touch{display:none}
 body.touch #touch{display:block}
@@ -148,7 +149,8 @@ body.touch #touch{display:block}
     <button class="rbtn" id="bBag" title="Backpack (I)">🎒</button>
     <button class="rbtn" id="bMap" title="Map (M)">🗺️</button>
     <button class="rbtn" id="bHelp" title="Help (H)">❓</button>
-    <button class="rbtn" id="bSnd" title="Sound on/off">🔊</button>
+    <button class="rbtn" id="bMusic" title="Music on/off">🎵</button>
+    <button class="rbtn" id="bSnd" title="Sound effects on/off">🔊</button>
   </div>
   <div id="touch">
     <div id="stick"><div id="knob"></div></div>
@@ -202,23 +204,141 @@ function drawEmoji(e,x,y,size,flip=false,alpha=1){const px=Math.max(8,Math.min(5
 function label(text,x,y,size=11,color='#fff'){ctx.font=`800 ${size}px ${'"Baloo 2","Comic Sans MS",sans-serif'}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=size*0.35;ctx.strokeStyle='rgba(40,25,60,.85)';ctx.lineJoin='round';ctx.strokeText(text,x,y);ctx.fillStyle=color;ctx.fillText(text,x,y);}
 function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
 
-// ================= sound =================
-let AC=null,muted=false;
-function tone(f,d=0.12,type='sine',v=0.07,slide=0,delay=0){if(muted)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const t0=AC.currentTime+delay;const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t0);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f+slide),t0+d);g.gain.setValueAtTime(v,t0);g.gain.exponentialRampToValueAtTime(0.0001,t0+d);o.connect(g);g.connect(AC.destination);o.start(t0);o.stop(t0+d+0.03);}catch(e){}}
-function noise(d=0.8,v=0.25){if(muted)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const n=AC.sampleRate*d,buf=AC.createBuffer(1,n,AC.sampleRate),ch=buf.getChannelData(0);for(let i=0;i<n;i++)ch[i]=(Math.random()*2-1)*Math.pow(1-i/n,2);const s=AC.createBufferSource();s.buffer=buf;const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=400;const g=AC.createGain();g.gain.value=v;s.connect(f);f.connect(g);g.connect(AC.destination);s.start();}catch(e){}}
+// ================= sound & music =================
+// Everything is made live with Web Audio: no sound files to download.
+// master -> compressor -> speakers; sfxBus holds sound effects and ambience; musicBus holds the songs (plus a soft echo).
+let AC=null,master=null,sfxBus=null,musicBus=null,noiseBuf=null,rainGain=null,windGain=null,musicOn=true,sfxOn=true;
+const MUSIC_VOL=.5;
+try{const a=JSON.parse(localStorage.getItem('petIslandsAudio')||'{}');if(a.music===false)musicOn=false;if(a.sfx===false)sfxOn=false;}catch(e){}
+function saveAudioPrefs(){try{localStorage.setItem('petIslandsAudio',JSON.stringify({music:musicOn,sfx:sfxOn}));}catch(e){}}
+function ensureAC(){
+  if(AC)return AC;
+  try{
+    AC=new(window.AudioContext||window.webkitAudioContext)();
+    master=AC.createGain();master.gain.value=.9;
+    const comp=AC.createDynamicsCompressor();comp.threshold.value=-12;comp.ratio.value=4;master.connect(comp);comp.connect(AC.destination);
+    sfxBus=AC.createGain();sfxBus.gain.value=sfxOn?1:0;sfxBus.connect(master);
+    musicBus=AC.createGain();musicBus.gain.value=0;musicBus.connect(master);
+    const dl=AC.createDelay(1),fb=AC.createGain(),wet=AC.createGain();dl.delayTime.value=.3;fb.gain.value=.25;wet.gain.value=.2;musicBus.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(wet);wet.connect(master);
+    const n=AC.sampleRate*2;noiseBuf=AC.createBuffer(1,n,AC.sampleRate);const ch=noiseBuf.getChannelData(0);for(let i=0;i<n;i++)ch[i]=Math.random()*2-1;
+    // looping rain and wind beds, faded in and out by the weather
+    const loop=(type,freq,q)=>{const s=AC.createBufferSource();s.buffer=noiseBuf;s.loop=true;const f=AC.createBiquadFilter();f.type=type;f.frequency.value=freq;f.Q.value=q;const g=AC.createGain();g.gain.value=0;s.connect(f);f.connect(g);g.connect(sfxBus);s.start();return g;};
+    rainGain=loop('lowpass',1400,.5);windGain=loop('bandpass',450,.8);
+  }catch(e){AC=null;}
+  return AC;
+}
+function tone(f,d=0.12,type='sine',v=0.07,slide=0,delay=0){if(!sfxOn||!ensureAC())return;try{const t0=AC.currentTime+delay;const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t0);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f+slide),t0+d);g.gain.setValueAtTime(0.0001,t0);g.gain.exponentialRampToValueAtTime(v,t0+.008);g.gain.exponentialRampToValueAtTime(0.0001,t0+d);o.connect(g);g.connect(sfxBus);o.start(t0);o.stop(t0+d+0.03);}catch(e){}}
+function noise(d=0.8,v=0.25,type='lowpass',freq=400,delay=0,q=1){if(!sfxOn||!ensureAC())return;try{const t0=AC.currentTime+delay;const s=AC.createBufferSource();s.buffer=noiseBuf;const f=AC.createBiquadFilter();f.type=type;f.frequency.value=freq;f.Q.value=q;const g=AC.createGain();g.gain.setValueAtTime(v,t0);g.gain.exponentialRampToValueAtTime(0.0001,t0+d);s.connect(f);f.connect(g);g.connect(sfxBus);s.start(t0,Math.random()*1.5,d+.05);}catch(e){}}
+const arp=(notes,gap=.07,d=.15,type='sine',v=.06)=>notes.forEach((f,i)=>tone(f,d,type,v,0,i*gap));
 const SFX={
   pick(){tone(880,.08,'sine',.07);tone(1320,.1,'sine',.06,0,.06)},
   talk(){tone(540,.06,'triangle',.05)},
-  hit(){tone(220,.18,'square',.05,-140)},
-  heal(){tone(660,.12,'sine',.06);tone(990,.16,'sine',.06,0,.08)},
-  win(){[523,659,784,1047].forEach((f,i)=>tone(f,.2,'triangle',.08,0,i*.12))},
-  unlock(){[784,988,1175,1568].forEach((f,i)=>tone(f,.18,'sine',.07,0,i*.09))},
-  lose(){[440,392,330].forEach((f,i)=>tone(f,.25,'triangle',.06,0,i*.18))},
-  fly(){tone(300,.3,'sine',.05,500)},
-  boat(){tone(200,.25,'sine',.05,100)},
-  thunder(){noise(1.2,.35)},
+  hit(){tone(220,.18,'square',.05,-140);noise(.12,.12,'lowpass',900)},
+  heal(){arp([660,880,990,1320],.06,.16,'sine',.05)},
+  win(){arp([523,659,784,1047],.12,.22,'triangle',.08);arp([1047,1319,1568],.12,.3,'sine',.04)},
+  unlock(){arp([784,988,1175,1568,2093],.08,.2,'sine',.07)},
+  lose(){[440,392,349,330].forEach((f,i)=>tone(f,.3,'triangle',.06,0,i*.2))},
+  fly(){tone(300,.35,'sine',.05,500);noise(.4,.06,'bandpass',1200)},
+  boat(){tone(200,.25,'sine',.05,100);noise(.4,.05,'lowpass',600)},
+  thunder(){noise(1.4,.4,'lowpass',300);noise(.5,.25,'lowpass',900,.05)},
   zap(){tone(1200,.12,'sawtooth',.03,-800)},
+  splash(){noise(.45,.28,'lowpass',1400);tone(320,.25,'sine',.05,-180);[0,.08,.16].forEach(t=>tone(500+Math.random()*400,.1,'sine',.03,500,.15+t))},
+  bubble(){tone(380+Math.random()*300,.12,'sine',.035,500)},
+  gem(){arp([1568,2093,2637],.05,.14,'triangle',.05)},
+  chest(){tone(160,.25,'sawtooth',.025,-80);noise(.2,.06,'lowpass',500);arp([1047,1319,1568,2093],.07,.22,'triangle',.06)},
+  door(){tone(150,.28,'triangle',.06,-50);noise(.12,.05,'lowpass',700)},
+  page(){noise(.2,.08,'highpass',2500)},
+  open(){tone(660,.07,'sine',.04,250)},
+  close(){tone(720,.07,'sine',.04,-280)},
+  land(){tone(130,.16,'sine',.08,-60);noise(.1,.05,'lowpass',500)},
+  battleStart(){noise(.5,.08,'bandpass',800);arp([392,523,659,784],.06,.2,'square',.035)},
+  roar(){tone(110,.7,'sawtooth',.06,-60);noise(.6,.18,'lowpass',380)},
+  shield(){arp([880,1320,1760],.05,.25,'sine',.04)},
+  stun(){[600,450,600,450,600].forEach((f,i)=>tone(f,.07,'sine',.04,0,i*.07))},
+  crit(){tone(1200,.1,'square',.04);tone(600,.25,'sawtooth',.04,-300,.05)},
+  munch(){[0,.1,.2].forEach(t=>noise(.06,.1,'bandpass',1500,t))},
+  whistle(){tone(900,.25,'sine',.05,700)},
+  cheer(){arp([523,659,784,1047,1319],.06,.18,'triangle',.06)},
+  chime(){arp([1047,1319,1568,2093],.15,.5,'sine',.05)},
+  click(){tone(2200,.03,'square',.03)},
+  step(soft){noise(.05,soft?.035:.05,'bandpass',soft?600:1100,0,2)},
+  swim(){noise(.3,.04,'lowpass',700)},
+  wave(){noise(.9,.05,'lowpass',500)},
+  bird(){const f=2400+Math.random()*800;tone(f,.08,'sine',.025,600);tone(f+300,.07,'sine',.02,-400,.11);if(Math.random()<.5)tone(f,.06,'sine',.02,500,.22)},
+  drip(){tone(1700+Math.random()*900,.3,'sine',.04,-1000)},
 };
+
+// ---------- songs ----------
+// Each song: chords (relative to the root note), a scale for the tune, instruments and a drum style.
+// The tune is made once from a fixed seed, as a 2-bar phrase that repeats with a small change, so it sounds like a real song.
+const TRACKS={
+  world:{bpm:108,root:60,prog:[[0,4,7],[-5,-1,2],[-3,0,4],[-7,-3,0]],scale:[0,2,4,7,9],mstep:2,rest:.3,lead:'triangle',leadVol:.06,bass:'triangle',bassVol:.11,stab:true,drums:'light',seed:11},
+  sea:{bpm:72,root:57,prog:[[0,3,7],[-4,0,3],[-7,-4,0],[-2,2,5]],scale:[0,3,5,7,10],mstep:4,rest:.35,lead:'sine',leadVol:.055,pad:.03,bass:'sine',bassVol:.1,bubbles:true,seed:22},
+  cave:{bpm:60,root:50,prog:[[0,3,7],[1,4,8],[0,3,7],[-2,1,5]],scale:[0,3,5,6,7,10],mstep:4,rest:.55,lead:'sine',leadVol:.05,pad:.035,bass:'sine',bassVol:.1,drips:true,seed:33},
+  museum:{bpm:80,root:65,prog:[[0,4,7],[-3,0,4],[2,5,9],[-5,-1,2]],scale:[0,2,4,7,9],mstep:4,rest:.3,lead:'sine',leadVol:.05,pad:.025,bass:'sine',bassVol:.09,seed:44},
+  battle:{bpm:138,root:57,prog:[[0,3,7],[-4,0,3],[3,7,10],[-2,2,5]],scale:[0,3,5,7,10],mstep:2,rest:.2,lead:'square',leadVol:.035,bass:'sawtooth',bassVol:.05,bass8:true,stab:true,drums:'rock',seed:55},
+  boss:{bpm:152,root:52,prog:[[0,3,7],[0,3,7],[-4,0,3],[-5,-1,2]],scale:[0,1,3,5,7,8,10],mstep:2,rest:.15,lead:'sawtooth',leadVol:.028,bass:'sawtooth',bassVol:.055,bass8:true,drums:'heavy',seed:66},
+  hospital:{bpm:96,root:62,prog:[[0,4,7],[5,9,12],[-3,0,4],[-5,-1,2]],scale:[0,2,4,7,9],mstep:2,rest:.35,lead:'triangle',leadVol:.05,pad:.02,bass:'triangle',bassVol:.09,drums:'march',seed:77},
+};
+function makeTune(tr){const r=mulberry32(tr.seed),sc=tr.scale,len=sc.length;let deg=len+Math.floor(len/2);const A=[];
+  for(let s=0;s<32;s++){if(s%tr.mstep||r()<tr.rest){A.push(null);continue;}deg=clamp(deg+Math.round((r()-.5)*4),0,len*2-1);A.push(sc[deg%len]+12*Math.floor(deg/len));}
+  const B=A.map((n,i)=>i>=24&&n!==null&&r()<.6?n+(r()<.5?2:-3):n);return[...A,...B];}
+Object.values(TRACKS).forEach(t=>t.tune=makeTune(t));
+const hz=m=>440*Math.pow(2,(m-69)/12);
+function mnote(t,m,d,type,v,att=.01,rel=.12){const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=hz(m);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(v,t+att);g.gain.setValueAtTime(v,t+Math.max(att,d-rel));g.gain.exponentialRampToValueAtTime(0.0001,t+d);
+  if(type==='sawtooth'||type==='square'){const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=2200;o.connect(f);f.connect(g);}else o.connect(g);
+  g.connect(musicBus);o.start(t);o.stop(t+d+.05);}
+function drum(t,kind,v=1){
+  if(kind==='kick'){const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(42,t+.14);g.gain.setValueAtTime(.32*v,t);g.gain.exponentialRampToValueAtTime(0.0001,t+.18);o.connect(g);g.connect(musicBus);o.start(t);o.stop(t+.2);return;}
+  const s=AC.createBufferSource();s.buffer=noiseBuf;const f=AC.createBiquadFilter(),g=AC.createGain(),d=kind==='hat'?.04:.13;
+  f.type=kind==='hat'?'highpass':'bandpass';f.frequency.value=kind==='hat'?7000:1800;g.gain.setValueAtTime((kind==='hat'?.05:.12)*v,t);g.gain.exponentialRampToValueAtTime(0.0001,t+d);
+  s.connect(f);f.connect(g);g.connect(musicBus);s.start(t,Math.random(),d+.02);}
+const DRUMS={light:{kick:[0,8],snare:[12],hat:[2,6,10,14],v:.6},rock:{kick:[0,8,10],snare:[4,12],hat:[0,2,4,6,8,10,12,14],v:.9},
+  heavy:{kick:[0,3,8,11],snare:[4,12],hat:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],v:1},march:{kick:[0,8],snare:[4,12],hat:[],v:.55}};
+function playStep(tr,step,t){
+  const sd=60/tr.bpm/4,s=step%16,chord=tr.prog[Math.floor(step/16)%tr.prog.length];
+  if(tr.pad&&s===0)chord.forEach(n=>mnote(t,tr.root+n,sd*16*.98,'sine',tr.pad,.5,.8));
+  if(tr.bass8?s%2===0:(s===0||s===8))mnote(t,tr.root+chord[0]-12,sd*(tr.bass8?1.7:7),tr.bass,tr.bassVol,.006,.1);
+  if(tr.stab&&(s===4||s===12))chord.forEach(n=>mnote(t,tr.root+n+12,sd*1.3,'triangle',.02,.005,.08));
+  const m=tr.tune[step%64];if(m!=null)mnote(t,tr.root+12+m,sd*tr.mstep*.92,tr.lead,tr.leadVol,.012,.12);
+  const dr=DRUMS[tr.drums];if(dr){if(dr.kick.includes(s))drum(t,'kick',dr.v);if(dr.snare.includes(s))drum(t,'snare',dr.v);if(dr.hat.includes(s))drum(t,'hat',dr.v);}
+  if(tr.drips&&Math.random()<.05)mnote(t,tr.root+36+tr.scale[Math.floor(Math.random()*tr.scale.length)],.4,'sine',.03,.003,.35);
+  if(tr.bubbles&&Math.random()<.05){const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(400,t);o.frequency.exponentialRampToValueAtTime(900,t+.1);g.gain.setValueAtTime(.025,t);g.gain.exponentialRampToValueAtTime(0.0001,t+.12);o.connect(g);g.connect(musicBus);o.start(t);o.stop(t+.15);}
+}
+let curTrack=null,switching=false,stepIdx=0,nextT=0;
+function trackFor(){if(scene==='battle')return B&&B.boss?'boss':'battle';if(scene==='carry')return 'hospital';if(scene==='sea')return 'sea';if(scene==='cave')return 'cave';if(scene==='museum')return 'museum';return 'world';}
+function musicTick(){
+  if(!AC||AC.state!=='running'||!musicOn||scene==='title')return;
+  const want=trackFor();
+  if(want!==curTrack&&!switching){
+    if(!curTrack){curTrack=want;stepIdx=0;nextT=AC.currentTime+.1;musicBus.gain.setTargetAtTime(MUSIC_VOL,AC.currentTime,.4);}
+    else{switching=true;musicBus.gain.setTargetAtTime(0,AC.currentTime,.12);setTimeout(()=>{curTrack=trackFor();stepIdx=0;nextT=AC.currentTime+.05;musicBus.gain.setTargetAtTime(MUSIC_VOL,AC.currentTime,.25);switching=false;},450);}
+  }
+  if(!curTrack||switching)return;
+  const tr=TRACKS[curTrack];if(nextT<AC.currentTime-.2)nextT=AC.currentTime+.05;
+  while(nextT<AC.currentTime+.15){playStep(tr,stepIdx,nextT);nextT+=60/tr.bpm/4;stepIdx++;}
+}
+setInterval(musicTick,30);
+function setMusic(on){musicOn=on;saveAudioPrefs();if(AC)musicBus.gain.setTargetAtTime(on?MUSIC_VOL:0,AC.currentTime,.2);if(!on)curTrack=null;}
+function setSfx(on){sfxOn=on;saveAudioPrefs();if(AC)sfxBus.gain.setTargetAtTime(on?1:0,AC.currentTime,.05);}
+document.addEventListener('visibilitychange',()=>{if(!AC)return;if(document.hidden)AC.suspend();else AC.resume();});
+
+// ---------- ambience: weather beds, footsteps, birds, bubbles, drips ----------
+let ambT=2,stepAcc=0,bedT=0;
+function audioTick(dt){
+  if(!AC||AC.state!=='running')return;
+  bedT-=dt;if(bedT<=0){bedT=.25;const ew=scene==='world'?effWeather():'';const now=AC.currentTime;
+    rainGain.gain.setTargetAtTime(ew==='storm'?.11:ew==='rain'?.07:0,now,.6);
+    windGain.gain.setTargetAtTime(ew==='windy'?.09:ew==='snow'?.035:scene==='sea'?.015:0,now,.6);}
+  if(P.moving&&(scene==='world'||scene==='museum'||scene==='sea'||scene==='cave')){stepAcc+=dt;
+    const every=P.mode==='walk'?.3:P.mode==='swim'?.65:P.mode==='boat'?1.1:9;
+    if(stepAcc>every){stepAcc=0;if(P.mode==='walk'){const i=tileIdx(P.x,P.y);SFX.step(scene==='world'&&i>=0&&terr[i]===2);}else if(P.mode==='swim')SFX.swim();else if(P.mode==='boat')SFX.wave();}}
+  ambT-=dt;if(ambT<=0){ambT=rand(2.5,6);
+    if(scene==='world'&&P.mode!=='boat'&&curIsland>=0&&['sunny','rainbow','cloudy'].includes(Wt.type))SFX.bird();
+    else if(scene==='sea'){SFX.bubble();ambT=rand(1,3);}
+    else if(scene==='cave'){SFX.drip();ambT=rand(1.5,4);}}
+}
 
 // ================= data =================
 const T=32,MW=600,MH=580;
@@ -898,8 +1018,8 @@ let dlg=null;const dlgQ=[];
 function say(o){dlgQ.push(o);if(!dlg)nextDlg();else if(!dlg.choices){const b=$('dchoices').firstChild;if(b)b.textContent='Next ▶';}}
 function nextDlg(){const o=dlgQ.shift();const el=$('dialog');if(!o){dlg=null;el.classList.add('hidden');return;}dlg=o;el.classList.remove('hidden');$('demoji').textContent=o.emoji||'';$('dname').textContent=o.name||'';$('dtext').textContent=o.text;const box=$('dchoices');box.innerHTML='';const ch=o.choices||[{label:dlgQ.length?'Next ▶':'OK ▶'}];ch.forEach((c,i)=>{const b=document.createElement('button');b.className='choice'+(i>0?' alt':'');b.innerHTML=(ch.length>1?`<span class="k">${i+1}</span>`:'');b.appendChild(document.createTextNode(c.label));b.onclick=()=>chooseDlg(i);box.appendChild(b);});}
 function chooseDlg(i){if(!dlg)return;const ch=(dlg.choices||[{label:'OK'}])[i];if(!ch)return;SFX.talk();nextDlg();if(ch.fn)ch.fn();}
-function openOverlay(html){$('ovBox').innerHTML='<button class="closeBtn" id="ovClose">Close ✕</button>'+html;$('overlay').classList.remove('hidden');$('ovClose').onclick=closeOverlay;}
-function closeOverlay(){$('overlay').classList.add('hidden');}
+function openOverlay(html){if(overlayOpen())SFX.click();else SFX.open();$('ovBox').innerHTML='<button class="closeBtn" id="ovClose">Close ✕</button>'+html;$('overlay').classList.remove('hidden');$('ovClose').onclick=closeOverlay;}
+function closeOverlay(){SFX.close();$('overlay').classList.add('hidden');}
 const overlayOpen=()=>!$('overlay').classList.contains('hidden');
 $('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeOverlay();});
 
@@ -943,21 +1063,21 @@ function doAct(a){
   switch(a.type){
     case 'npc':talkNPC(a.o);break;
     case 'animal':meetAnimal(a.o);break;
-    case 'museum':enterMuseum(a.o);break;
-    case 'house':S.seen.nap=1;save();say({name:'Home Sweet Home',emoji:'🏠',text:'You and your pets took a cozy nap. Zzz... 😴 Your game is saved!'});break;
+    case 'museum':SFX.door();enterMuseum(a.o);break;
+    case 'house':SFX.chime();S.seen.nap=1;save();say({name:'Home Sweet Home',emoji:'🏠',text:'You and your pets took a cozy nap. Zzz... 😴 Your game is saved!'});break;
     case 'boss':meetBoss();break;
     case 'boat':P.mode='boat';P.boat=a.o;P.x=a.o.x;P.y=a.o.y;SFX.boat();toast(isTouch()?'⛵ All aboard! Out at sea, tap 🌊 Dive to go underwater!':'⛵ All aboard! Out at sea, press E or Q to dive underwater!');break;
-    case 'land':P.mode='walk';P.boat=null;P.x=a.o.x;P.y=a.o.y;resetTrail();toast('🏝️ Land ho!');break;
+    case 'land':SFX.land();P.mode='walk';P.boat=null;P.x=a.o.x;P.y=a.o.y;resetTrail();toast('🏝️ Land ho!');break;
     case 'plant':pickPlant(a.o);break;
     case 'exhibit':readExhibit(a.o);break;
-    case 'exit':exitMuseum();break;
+    case 'exit':SFX.door();exitMuseum();break;
     case 'chest':openChest(a.o);break;
     case 'creature':lookCreature(a.o);break;
     case 'seaboss':meetSeaBoss(a.o);break;
     case 'wreck':searchWreck(a.o);break;
-    case 'hospital':save();say({name:'Nurse Holly',emoji:'👩‍⚕️',text:'Hi there! Everyone here is healthy and happy. 💖 If you ever lose a battle, your pets will carry you here and I\'ll fix you right up!'});break;
-    case 'cave':enterCave(a.o);break;
-    case 'caveexit':exitCave();break;
+    case 'hospital':SFX.chime();save();say({name:'Nurse Holly',emoji:'👩‍⚕️',text:'Hi there! Everyone here is healthy and happy. 💖 If you ever lose a battle, your pets will carry you here and I\'ll fix you right up!'});break;
+    case 'cave':SFX.click();enterCave(a.o);break;
+    case 'caveexit':SFX.swim();exitCave();break;
     case 'cavechest':openCaveChest(a.o);break;
     case 'cavepet':meetAnimal(a.o);break;
   }
@@ -1003,6 +1123,7 @@ function enterMuseum(b){curMuseum=b.museum;museumDoor={x:b.door.x,y:b.door.y+4};
   toast(`🏛️ Welcome to ${MUSEUMS[b.museum].name}!`);if(!S.seen['m_'+b.museum]){S.seen['m_'+b.museum]=1;say({name:MUSEUMS[b.museum].name,emoji:'🏛️',text:'Walk up to the books and exhibits and press E to read or look at them!'});}}
 function exitMuseum(){scene='world';P.x=museumDoor.x;P.y=museumDoor.y;P.mode='walk';resetTrail();}
 function readExhibit(e){
+  if(e.book)SFX.page();else SFX.pick();
   if(e.book){if(!S.read[e.n]){S.read[e.n]=1;toast(`📖 Books read: ${Object.keys(S.read).length}`);}e.book.forEach((pg,i)=>say({name:e.n,emoji:e.e,text:`📖 Page ${i+1}: ${pg}`,choices:[{label:i<e.book.length-1?'Next page ▶':'Close book'}]}));}
   else say({name:e.n,emoji:e.e,text:e.text});
 }
@@ -1010,7 +1131,7 @@ function readExhibit(e){
 function toggleFly(){
   if(scene==='sea'||scene==='cave')return toast("You can't fly underwater! Tap ⬆️ Up to go back to your boat.");if(scene!=='world')return toast("You can't fly indoors! 🏛️");
   if(P.mode!=='fly'){P.boat=null;P.mode='fly';SFX.fly();toast('🕊️ Whee! You are flying! Press F again to land.');return;}
-  if(isLandWalk(P.x,P.y)){P.mode='walk';toast('Landed! 👣');resetTrail();return;}
+  if(isLandWalk(P.x,P.y)){P.mode='walk';SFX.land();toast('Landed! 👣');resetTrail();return;}
   const b=nearestBoat(80);if(b){P.mode='boat';P.boat=b;P.x=b.x;P.y=b.y;toast('Landed in a boat ⛵');return;}
   if(isWater(P.x,P.y))toast("Can't land in the water! Fly to land or a boat ⛵");else toast("Can't land here. Try a clear spot!");
 }
@@ -1119,7 +1240,7 @@ cv.addEventListener('pointerdown',e=>{
 cv.addEventListener('pointermove',e=>{if(dest&&dest.hold&&dest.id===e.pointerId){const w=screenToWorld(e.clientX,e.clientY);dest.x=w.x;dest.y=w.y;}});
 const relDest=e=>{if(dest&&dest.id===e.pointerId)dest.hold=false;};
 cv.addEventListener('pointerup',relDest);cv.addEventListener('pointercancel',relDest);
-function unlockAudio(){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();}catch(e){}}
+function unlockAudio(){if(!ensureAC())return;try{if(AC.state==='suspended')AC.resume();}catch(e){}}
 const ACT_BTN={hospital:['🏥','Visit'],cave:['🔦','Go in'],caveexit:['🚪','Exit'],cavechest:['💎','Open'],cavepet:['❤️','Meet'],wreck:['🔍','Search'],seaboss:['⚔️','Fight'],chest:['💎','Open'],creature:['👀','Look'],npc:['💬','Talk'],animal:['❤️','Meet'],boat:['⛵','Sail'],land:['🏝️','Hop off'],plant:['🧺','Pick'],museum:['🚪','Go in'],house:['😴','Nap'],boss:['⚔️','Fight'],exhibit:['👀','Look'],exit:['🚪','Exit']};
 let lastBtnKey='';
 function updateTouchBtns(){const a=nearAct&&ACT_BTN[nearAct.type];const fl=P.mode==='fly';const key=(a?nearAct.type:'none')+fl+scene+P.mode;if(key===lastBtnKey)return;lastBtnKey=key;
@@ -1138,7 +1259,9 @@ function moveStick(e){unlockAudio();const r=stickEl.getBoundingClientRect();let 
 $('tE').addEventListener('click',()=>{unlockAudio();if(dlg)chooseDlg(0);else if(scene!=='battle'){dest=null;doAct(nearAct);}});
 $('tF').addEventListener('click',()=>{unlockAudio();if(!dlg){dest=null;toggleFly();}});
 $('bPets').onclick=()=>openPets();$('bBag').onclick=()=>openBag();$('bMap').onclick=()=>openMap();$('mini').onclick=()=>openMap();$('bHelp').onclick=()=>openHelp();
-$('bSnd').onclick=()=>{muted=!muted;$('bSnd').textContent=muted?'🔇':'🔊';};
+function paintAudioBtns(){$('bSnd').textContent=sfxOn?'🔊':'🔇';$('bMusic').classList.toggle('off',!musicOn);$('bMusic').title=musicOn?'Music is on (tap to turn off)':'Music is off (tap to turn on)';}
+$('bSnd').onclick=()=>{unlockAudio();setSfx(!sfxOn);paintAudioBtns();if(sfxOn)SFX.click();toast(sfxOn?'🔊 Sound effects on':'🔇 Sound effects off',1400);};
+$('bMusic').onclick=()=>{unlockAudio();setMusic(!musicOn);paintAudioBtns();toast(musicOn?'🎵 Music on':'🎵 Music off',1400);};paintAudioBtns();
 
 // ================= overlays =================
 function openPets(focus){
@@ -1217,7 +1340,8 @@ function openHelp(){
   <kbd>Q</kbd><span>Dive under the sea from your boat, or swim back up</span>
   <kbd>I</kbd><span>Backpack: pets, powers, snacks</span>
   <kbd>M</kbd><span>Map</span>
-  <kbd>1-9</kbd><span>Pick choices and battle moves</span></div>
+  <kbd>1-9</kbd><span>Pick choices and battle moves</span>
+  <kbd>🎵 🔊</kbd><span>Turn the music or the sound effects on and off</span></div>
   <h3>Tips</h3><div style="font-size:16px;line-height:1.4">
   🐾 Your pets follow you everywhere and never hurt you.<br>
   ⚔️ People with swords over their heads want to battle. You can always say no!<br>
@@ -1245,6 +1369,7 @@ function drawMini(){const c=$('mini'),g=c.getContext('2d');g.imageSmoothingEnabl
 // ================= update =================
 let time=0,saveT=0;
 function update(dt){
+  audioTick(dt);
   if(scene==='carry'){carryT+=dt;if(carryT>3.4)finishCarry();}
   if(scene==='world'||scene==='museum'||scene==='sea'||scene==='cave'){
     let ax=0,ay=0;
@@ -1273,7 +1398,7 @@ function update(dt){
     // auto-pick
     if(scene==='world'&&P.mode==='walk')PLANTS.forEach(p=>{if(p.ripe&&dist(p.x,p.y,P.x,P.y)<20)pickPlant(p);});
     if(scene==='cave')collectCrystals();
-    if(scene==='sea')for(const g of FLOOR_GEMS){if(S.floorGems[g.id]||Math.abs(g.x-P.x)>26||Math.abs(g.y-P.y)>26)continue;if(dist(g.x,g.y,P.x,P.y)<24){S.floorGems[g.id]=1;S.gems=(S.gems||0)+1;SFX.pick();hudDirty=true;toast(`💎 +1 sea gem! (${S.gems})`,1400);}}
+    if(scene==='sea')for(const g of FLOOR_GEMS){if(S.floorGems[g.id]||Math.abs(g.x-P.x)>26||Math.abs(g.y-P.y)>26)continue;if(dist(g.x,g.y,P.x,P.y)<24){S.floorGems[g.id]=1;S.gems=(S.gems||0)+1;SFX.gem();hudDirty=true;toast(`💎 +1 sea gem! (${S.gems})`,1400);}}
     nearAct=(dlg||overlayOpen())?null:findAct();
     if(dest&&dest.th&&sameAct(dest.th,nearAct)){const a=nearAct;dest=null;doAct(a);}
     updateTouchBtns();
@@ -1415,7 +1540,7 @@ function startBattle(opp){
   B={from:scene,opp,boss,lvl,ename:opp.name,ee:opp.e,ehp:hp,emax:hp,atk,hp:S.maxE,max:S.maxE,team:teamPets(),cd:{},shield:0,dodge:false,stun:0,weak:0,rescued:false,busy:false,over:false,
      fx:[],eShake:0,pShake:0,hop:{},turn:0,menu:null,snacks:0,healed:false,enraged:false,biome:(ISLANDS[curIsland]||ISLANDS[0]).biome,result:null};
   scene='battle';$('hud').classList.add('hidden');$('battleUI').classList.remove('hidden');
-  bmsg(boss?`${boss.name} roars! This is a BOSS battle! ${boss.e}`:`${opp.name} wants a battle! Pick a move!`);renderBtns();SFX.zap();
+  bmsg(boss?`${boss.name} roars! This is a BOSS battle! ${boss.e}`:`${opp.name} wants a battle! Pick a move!`);renderBtns();SFX.battleStart();if(boss)setTimeout(()=>SFX.roar(),350);
 }
 function bmsg(t){$('bmsg').textContent=t;}
 function layout(){const ph=$('battleUI').offsetHeight||170;const bh=Math.max(VH*.45,VH-ph);const s=Math.min(VW,bh*1.4);
@@ -1444,7 +1569,7 @@ function renderBtns(){
 function fxText(t,x,y,c){B.fx.push({k:'text',t,x,y,c,life:1.2,age:0});}
 function fxBurst(x,y,cols,n=18){for(let i=0;i<n;i++){const a=Math.random()*6.3,v=rand(60,220);B.fx.push({k:'dot',x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,c:pick(cols),life:rand(.5,1),age:0});}}
 function shoot(e,from,to,dur=.5,size=40){return new Promise(r=>{B.fx.push({k:'proj',e,x0:from.x,y0:from.y,x1:to.x,y1:to.y,age:0,life:dur,size,done:r});});}
-function hitEnemy(n,crit){const L=layout();B.ehp=Math.max(0,B.ehp-n);B.eShake=.4;fxText((crit?'DOUBLE! ':'')+'-'+n,L.EP.x,L.EP.y-L.s*.12,crit?'#ffc53d':'#ff5e57');fxBurst(L.EP.x,L.EP.y,['#fff','#ffd93d','#ff8fb1']);SFX.hit();}
+function hitEnemy(n,crit){const L=layout();B.ehp=Math.max(0,B.ehp-n);B.eShake=.4;fxText((crit?'DOUBLE! ':'')+'-'+n,L.EP.x,L.EP.y-L.s*.12,crit?'#ffc53d':'#ff5e57');fxBurst(L.EP.x,L.EP.y,['#fff','#ffd93d','#ff8fb1']);if(crit)SFX.crit();else SFX.hit();}
 function healMe(n){const L=layout();const h=Math.min(n,B.max-B.hp);B.hp+=h;fxText('+'+h,L.PP.x,L.PP.y-L.s*.12,'#2fbf71');fxBurst(L.PP.x,L.PP.y,['#7dffb0','#fff','#b6ffcf']);SFX.heal();}
 function petFrom(id){const L=layout();const i=Math.max(0,B.team.indexOf(id));B.hop[id]=.5;return petPos(i,L);}
 const POWERS={
@@ -1472,19 +1597,19 @@ async function runSpec(id){const p=PETS[id],w=p.pw||{},L=layout(),from=petFrom(i
   else await wait(300);
   const got=[];
   if(w.heal)healMe(w.heal);
-  if(w.shield){B.shield=Math.max(B.shield,w.shield);got.push(`a shield for ${w.shield} attack${w.shield>1?'s':''} 🛡️`);}
+  if(w.shield){SFX.shield();B.shield=Math.max(B.shield,w.shield);got.push(`a shield for ${w.shield} attack${w.shield>1?'s':''} 🛡️`);}
   if(w.dodge){B.dodge=true;got.push('a lucky dodge 🍀');}
   if(w.weak){B.weak=1;got.push('the next attack on you will be weaker');}
-  if(w.stun&&Math.random()<w.stun){B.stun=1;got.push('the other side is stunned 💫');}
+  if(w.stun&&Math.random()<w.stun){SFX.stun();B.stun=1;got.push('the other side is stunned 💫');}
   if(got.length)bmsg(`${p.power}! ${got.join(', ')}!`);}
 async function playerAction(kind,arg){
   if(!B||B.busy||B.over)return;B.busy=true;B.menu=null;renderBtns();
   const L=layout();
-  if(kind==='splash'){bmsg(`${S.name} used Splash Attack!`);await shoot('💦',L.PP,L.EP,.45);hitEnemy(ri(10,16));}
+  if(kind==='splash'){SFX.splash();bmsg(`${S.name} used Splash Attack!`);await shoot('💦',L.PP,L.EP,.45);hitEnemy(ri(10,16));}
   else if(kind==='pet'){const p=PETS[arg];bmsg(`${p.short} used ${p.power}!`);await (POWERS[arg]?POWERS[arg]():runSpec(arg));B.cd[arg]=PET_REST;}
-  else if(kind==='swap'){const [inId,outId]=arg;if(outId){B.team[B.team.indexOf(outId)]=inId;}else B.team.push(inId);delete B.cd[inId];S.team=B.team.slice();syncPets();B.hop[inId]=.6;SFX.unlock();
+  else if(kind==='swap'){const [inId,outId]=arg;if(outId){B.team[B.team.indexOf(outId)]=inId;}else B.team.push(inId);delete B.cd[inId];S.team=B.team.slice();syncPets();B.hop[inId]=.6;SFX.whistle();
     bmsg(`${PETS[inId].short} jumps in to help!${outId?` ${PETS[outId].short} takes a rest.`:''} 🐾`);await wait(900);}
-  else if(kind==='snack'){S.inv[arg]--;B.snacks++;bmsg(`You ate a ${CROPS[arg].n.toLowerCase()}. Yum! ${CROPS[arg].e}`);B.fx.push({k:'proj',e:CROPS[arg].e,x0:L.PP.x,y0:L.PP.y-80,x1:L.PP.x,y1:L.PP.y,age:0,life:.4,size:36,done:()=>{}});await wait(400);healMe(CROPS[arg].heal);}
+  else if(kind==='snack'){SFX.munch();S.inv[arg]--;B.snacks++;bmsg(`You ate a ${CROPS[arg].n.toLowerCase()}. Yum! ${CROPS[arg].e}`);B.fx.push({k:'proj',e:CROPS[arg].e,x0:L.PP.x,y0:L.PP.y-80,x1:L.PP.x,y1:L.PP.y,age:0,life:.4,size:36,done:()=>{}});await wait(400);healMe(CROPS[arg].heal);}
   await wait(650);
   if(B.ehp<=0)return win();
   await enemyTurn();
@@ -1499,7 +1624,7 @@ async function enemyTurn(){
   if(B.stun>0){B.stun=0;if(B.boss&&Math.random()<.5){bmsg(`${B.ename} shook it off! Bosses are tough! 💪`);await wait(1000);}else{bmsg(`${B.ename} can't move this turn!`);await wait(1000);return endRound();}}
   // bosses get angry once, when half beaten
   if(B.boss&&!B.enraged&&B.ehp<=B.emax/2){B.enraged=true;B.atk=B.atk.map(v=>Math.round(v*1.3));const h=Math.round(B.emax*.1);B.ehp=Math.min(B.emax,B.ehp+h);B.eShake=.6;
-    fxText('+'+h,L.EP.x,L.EP.y-L.s*.12,'#2fbf71');bmsg(`${B.ename} is ANGRY! 😡 It healed a little and now hits harder!`);SFX.thunder();await wait(1500);}
+    fxText('+'+h,L.EP.x,L.EP.y-L.s*.12,'#2fbf71');bmsg(`${B.ename} is ANGRY! 😡 It healed a little and now hits harder!`);SFX.roar();SFX.thunder();await wait(1500);}
   // regular battlers can eat one snack when they get low
   if(!B.boss&&!B.healed&&B.ehp<B.emax*.4&&Math.random()<.5){B.healed=true;const h=Math.round(B.emax*.2);B.ehp=Math.min(B.emax,B.ehp+h);
     fxText('+'+h,L.EP.x,L.EP.y-L.s*.12,'#2fbf71');bmsg(`${B.ename} ate a snack and healed! 🍪`);await wait(1200);return endRound();}
@@ -1508,7 +1633,7 @@ async function enemyTurn(){
   else if(!B.boss&&B.lvl>=4&&B.turn%4===0)mv={n:'Power Throw',e:'☄️',dmg:Math.round(ri(B.atk[0],B.atk[1])*1.6)};
   else{const m=pick(B.boss?B.boss.moves:MOVES);mv={...m,dmg:ri(B.atk[0],B.atk[1])};}
   if(B.weak){mv.dmg=Math.round(mv.dmg*.6);B.weak=0;}
-  bmsg(`${B.ename} used ${mv.n}!${sp?' 😱':''}`);await wait(450);
+  bmsg(`${B.ename} used ${mv.n}!${sp?' 😱':''}`);if(sp)SFX.roar();await wait(450);
   const hits=mv.hits||(mv.double?2:1);
   for(let h=0;h<hits&&B.hp>0;h++){await shoot(mv.e,L.EP,L.PP,.45,B.boss?54:40);takeHit(mv.dmg);if(h<hits-1)await wait(250);}
   if(mv.freeze&&B.hp>0){B.team.forEach(id=>B.cd[id]=Math.max(B.cd[id]||0,2));await wait(500);bmsg(mv.say||'Brrr! Ink Blizzard froze all your pets for a turn! ❄️');}
@@ -1523,7 +1648,7 @@ async function rescue(){
   B.rescued=true;const L=layout();const n=B.team.length;
   bmsg('Oh no, you fainted! 😵 ...But wait! Your animals are rushing in to help!');await wait(1500);
   for(let k=0;k<10;k++)B.fx.push({k:'proj',e:'💖',x0:petPos(k%n,L).x,y0:petPos(k%n,L).y,x1:L.PP.x+rand(-30,30),y1:L.PP.y+rand(-30,10),age:-k*.06,life:.6,size:26,done:()=>{}});
-  await wait(800);B.hp=0;healMe(Math.round(B.max*.45));bmsg('Your pets gave you a big hug! You got back up! 💖');await wait(1100);
+  await wait(800);B.hp=0;SFX.cheer();healMe(Math.round(B.max*.45));bmsg('Your pets gave you a big hug! You got back up! 💖');await wait(1100);
   bmsg('TEAM POWER! All your animals attack together!');
   for(const id of B.team){if(B.ehp<=0)break;const from=petFrom(id);await shoot(PETS[id].e,from,L.EP,.3,40);hitEnemy(ri(10,15));}
   B.cd={};B.shield=Math.max(B.shield,1);await wait(700);
@@ -1608,14 +1733,14 @@ function drawBattle(){
 // ================= under the sea (scene) =================
 function dive(){
   if(scene!=='world'||P.mode!=='boat')return;
-  scene='sea';P.mode='swim';P.diveBoat=P.boat;P.boat=null;dest=null;resetTrail();SFX.boat();hudDirty=true;
+  scene='sea';P.mode='swim';P.diveBoat=P.boat;P.boat=null;dest=null;resetTrail();SFX.splash();hudDirty=true;
   toast('🌊 Splash! You dove under the sea!');
   if(!S.seen.dive){S.seen.dive=1;say({name:'Under the Sea',emoji:'🐠',text:`Swim around and look at sea creatures 👀 to fill your Sea Book. Open treasure chests to find sea gems 💎. Sea animals like turtles and dolphins want gems to be your friend! ${isTouch()?'Tap ⬆️ Up':'Press Q'} to go back up to your boat.`});}
 }
 function surface(){
   if(scene!=='sea')return;
   scene='world';P.mode='boat';P.boat=P.diveBoat||nearestBoat(1e9);P.diveBoat=null;dest=null;
-  if(P.boat){P.boat.x=P.x;P.boat.y=P.y;}resetTrail();SFX.boat();toast('⛵ Back up in your boat!');hudDirty=true;save();
+  if(P.boat){P.boat.x=P.x;P.boat.y=P.y;}resetTrail();SFX.splash();toast('⛵ Back up in your boat!');hudDirty=true;save();
 }
 function findSeaAct(take){
   ANIMALS.forEach(a=>{if(!a.sea||hasPet(a.pet))return;const d=dist(a.x,a.y,P.x,P.y);if(d<62)take(d-12,{type:'animal',o:a,x:a.x,y:a.y-20,label:'Meet '+PETS[a.pet].short});});
@@ -1644,8 +1769,8 @@ function findCaveAct(take){const c=CAVES[curCave];
   if(!hasPet(c.pet.pet)){const d=dist(c.pet.x,c.pet.y,P.x,P.y);if(d<56)take(d-8,{type:'cavepet',o:c.pet,x:c.pet.x,y:c.pet.y-20,label:'Meet '+PETS[c.pet.pet].short});}
   c.chests.forEach(ch=>{if(S.caveItems[ch.key])return;const d=dist(ch.x,ch.y,P.x,P.y);if(d<50)take(d,{type:'cavechest',o:ch,x:ch.x,y:ch.y-22,label:'Open the treasure chest'});});
   const d=dist(c.exit.x,c.exit.y,P.x,P.y);if(d<52)take(d,{type:'caveexit',x:c.exit.x,y:c.exit.y-24,label:'Swim out of the cave'});}
-function collectCrystals(){const c=CAVES[curCave];for(const g of c.crystals){if(S.caveItems[g.key]||Math.abs(g.x-P.x)>28||Math.abs(g.y-P.y)>28)continue;if(dist(g.x,g.y,P.x,P.y)<26){S.caveItems[g.key]=1;S.gems=(S.gems||0)+2;SFX.pick();hudDirty=true;toast(`💎 Glowing crystal! +2 sea gems (${S.gems})`,1500);}}}
-function openCaveChest(ch){if(S.caveItems[ch.key])return;S.caveItems[ch.key]=1;const g=ri(3,6);S.gems=(S.gems||0)+g;const crop=pick(Object.keys(CROPS));S.inv[crop]=(S.inv[crop]||0)+1;SFX.unlock();hudDirty=true;save();
+function collectCrystals(){const c=CAVES[curCave];for(const g of c.crystals){if(S.caveItems[g.key]||Math.abs(g.x-P.x)>28||Math.abs(g.y-P.y)>28)continue;if(dist(g.x,g.y,P.x,P.y)<26){S.caveItems[g.key]=1;S.gems=(S.gems||0)+2;SFX.gem();hudDirty=true;toast(`💎 Glowing crystal! +2 sea gems (${S.gems})`,1500);}}}
+function openCaveChest(ch){if(S.caveItems[ch.key])return;S.caveItems[ch.key]=1;const g=ri(3,6);S.gems=(S.gems||0)+g;const crop=pick(Object.keys(CROPS));S.inv[crop]=(S.inv[crop]||0)+1;SFX.chest();hudDirty=true;save();
   say({name:'Cave Treasure!',emoji:'💎',text:`You found ${g} sea gems 💎 and a ${CROPS[crop].n.toLowerCase()} ${CROPS[crop].e} in the dark! You have ${S.gems} sea gems.`});}
 function drawCaveEntrance(c){const x=c.x,y=c.y;ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(x,y+10,78,16,0,0,6.3);ctx.fill();
   ctx.fillStyle='#2c3a40';ctx.beginPath();ctx.ellipse(x,y+8,72,52,0,Math.PI,0);ctx.fill();ctx.fillStyle='#3d4f57';ctx.beginPath();ctx.ellipse(x-26,y-22,28,20,0,0,6.3);ctx.fill();ctx.beginPath();ctx.ellipse(x+28,y-14,24,17,0,0,6.3);ctx.fill();ctx.beginPath();ctx.ellipse(x+4,y-40,20,14,0,0,6.3);ctx.fill();
@@ -1692,10 +1817,16 @@ function drawCave(){
   // a warm tint inside the beam
   ctx.fillStyle='rgba(255,236,170,.07)';ctx.beginPath();ctx.moveTo(sx/DPR,sy/DPR);ctx.arc(sx/DPR,sy/DPR,R/DPR,la-.5,la+.5);ctx.closePath();ctx.fill();
 }
+function searchWreck(w){if(S.wrecks[w.id])return;S.wrecks[w.id]=1;const g=ri(6,10);S.gems=(S.gems||0)+g;const crops=[];for(let k=0;k<3;k++){const c=pick(Object.keys(CROPS));S.inv[c]=(S.inv[c]||0)+1;crops.push(CROPS[c].e);}
+  SFX.chest();setTimeout(()=>SFX.win(),500);hudDirty=true;const found=Object.keys(S.wrecks).length;
+  say({name:w.name,emoji:'⚓',text:`You searched the sunken ship and found a big treasure: ${g} sea gems 💎 and ${crops.join(' ')}!`});
+  say({name:'Relic found!',emoji:w.relic.e,text:`Inside the captain's cabin you found the ${w.relic.n} ${w.relic.e}! It goes in your Treasure Collection. (${found}/${WRECKS.length} relics found)`});
+  if(found===WRECKS.length){S.gems+=30;say({name:'Treasure Master!',emoji:'🏆',text:`WOW! You found ALL ${WRECKS.length} relics from every shipwreck! You are a true Treasure Master! Here are 30 bonus sea gems 💎!`});}
+  save();}
 function openChest(c){if(S.chests[c.id])return;S.chests[c.id]=1;const g=ri(1,3);S.gems=(S.gems||0)+g;const crop=pick(Object.keys(CROPS));S.inv[crop]=(S.inv[crop]||0)+1;
-  SFX.unlock();hudDirty=true;save();const left=CHESTS.length-Object.keys(S.chests).length;
+  SFX.chest();hudDirty=true;save();const left=CHESTS.length-Object.keys(S.chests).length;
   say({name:'Treasure!',emoji:'💎',text:`You found ${g} sea gem${g>1?'s':''} 💎 and a ${CROPS[crop].n.toLowerCase()} ${CROPS[crop].e}! You have ${S.gems} sea gems. (${left} treasure chests left to find in the whole ocean.)`});}
-function lookCreature(c){const sp=c.sp,isNew=!S.book[sp.n];S.book[sp.n]=1;if(isNew){SFX.pick();hudDirty=true;save();}
+function lookCreature(c){const sp=c.sp,isNew=!S.book[sp.n];S.book[sp.n]=1;SFX.bubble();if(isNew){SFX.gem();hudDirty=true;save();}
   say({name:sp.n+(isNew?' ✨ NEW!':''),emoji:sp.e,text:`${sp.fact} ${isNew?`(Sea Book: ${Object.keys(S.book).length}/${SEA_SPECIES.length} found)`:''}`});}
 const seaBubbles=[];for(let i=0;i<45;i++)seaBubbles.push({x:Math.random(),y:Math.random(),r:rand(1.5,4.5),v:rand(.03,.09),w:Math.random()*6});
 function drawChest(x,y,open){ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(x,y+10,16,5,0,0,6.3);ctx.fill();
@@ -1772,7 +1903,7 @@ function finishCarry(){const hs=BUILDINGS.filter(b=>b.k==='hospital');let h=hs[0
   const names=teamPets().map(id=>PETS[id].short).join(', ');
   say({name:'Nurse Holly',emoji:'👩‍⚕️',text:`Oh my! ${names} carried you all the way to the hospital on ${ISLANDS[h.island].name}! 🏥 Let me take care of you...`});
   say({name:'Nurse Holly',emoji:'👩‍⚕️',text:'There! A bandage, a cookie, and a big hug. 🍪💖 You\'re all better now. Your pets were SO brave. You\'ll get them next time!'});
-  carryNotes.forEach(n=>say(n));carryNotes=[];save();}
+  SFX.chime();carryNotes.forEach(n=>say(n));carryNotes=[];save();}
 function drawCarry(){ctx.setTransform(DPR,0,0,DPR,0,0);RES=DPR;const t=Math.min(1,carryT/3);
   const g=ctx.createLinearGradient(0,0,0,VH);g.addColorStop(0,'#ffd8e8');g.addColorStop(1,'#bfe8ff');ctx.fillStyle=g;ctx.fillRect(0,0,VW,VH);
   const gy=VH*.7;ctx.fillStyle='#7fd46a';ctx.fillRect(0,gy,VW,VH-gy);ctx.fillStyle='#d8c08a';ctx.fillRect(0,gy+10,VW,26);
@@ -1828,7 +1959,7 @@ function begin(fresh){
   }
   save();
 }
-window.__pi={get P(){return P},get S(){return S},get B(){return B},get act(){return nearAct},get scene(){return scene},get dest(){return dest},SEA_LIFE,CHESTS,SEA_BOSSES,LAND_BOSSES,CAVES,enterCave,exitCave,openPets,get carryT(){return carryT},FLOOR_GEMS,WRECKS,NPCS,ANIMALS,PLANTS,BUILDINGS,BOSSES,terr,solid,isl,MW,MH,T,keys,step(n=1,dt=1/60){for(let i=0;i<n;i++){time+=dt;update(dt);}draw();},doAct,toggleFly,startBattle,BOATS,ISLANDS};
+window.__pi={get P(){return P},get S(){return S},get B(){return B},get act(){return nearAct},get scene(){return scene},get dest(){return dest},SFX,TRACKS,playStep,ensureAC,trackFor,get AC(){return AC},get curTrack(){return curTrack},SEA_LIFE,CHESTS,SEA_BOSSES,LAND_BOSSES,CAVES,enterCave,exitCave,openPets,get carryT(){return carryT},FLOOR_GEMS,WRECKS,NPCS,ANIMALS,PLANTS,BUILDINGS,BOSSES,terr,solid,isl,MW,MH,T,keys,step(n=1,dt=1/60){for(let i=0;i<n;i++){time+=dt;update(dt);}draw();},doAct,toggleFly,startBattle,BOATS,ISLANDS};
 $('startBtn').onclick=()=>begin(true);
 $('contBtn').onclick=()=>begin(false);
 })();
